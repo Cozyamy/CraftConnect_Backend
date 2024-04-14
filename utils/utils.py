@@ -5,7 +5,8 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from models.user_models import TokenData
 from pydantic import ValidationError
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Request
+from firebase_admin import auth
 
 
 
@@ -38,3 +39,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+async def validate_firebase_token_header(request: Request):
+    """Do Validates token for firebase if user exists or not. and returns the email of the user."""
+    headers = request.headers
+    jwt = headers.get('Authorization').split(" ")[-1] if headers.get('Authorization') else None
+    if jwt is None:
+        raise HTTPException(status_code=401, detail="Firebase Missing Token")
+    try:
+        user = auth.verify_id_token(jwt)
+        return user.get('email')
+        # there is no if statement here to check user because i'm assuming that the frontend would have alredy registerd the user and the user would have been created in the database 
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid Token")

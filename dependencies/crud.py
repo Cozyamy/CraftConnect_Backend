@@ -14,3 +14,9 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
     if not verify_password(password, db_user.password):
         return None
     return db_user
+
+def create_user(*, session: Session, user: User) -> User:
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
