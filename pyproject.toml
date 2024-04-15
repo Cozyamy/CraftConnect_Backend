@@ -2,7 +2,7 @@
 name = "craftconnect"
 version = "0.1.0"
 description = "A platform that connects artisans with customers, providing a marketplace for artisanal goods and services."
-authors = ["Cozyamy <cozyamy@gmail.com>"]
+authors = ["Cozyamy <cozyamy@gmail.com>", "miraclemenikelechi",]
 license = "MIT"
 readme = "README.md"
 
@@ -10,6 +10,10 @@ readme = "README.md"
 python = "^3.12"
 fastapi = "^0.110.1"
 uvicorn = "^0.29.0"
+sqlmodel = "^0.0.16"
+pydantic = {extras = ["email"], version = "^2.7.0"}
+phonenumbers = "^8.13.34"
+pydantic-extra-types = "^2.6.0"
 
 
 [build-system]
