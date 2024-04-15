@@ -19,7 +19,7 @@ class Settings(BaseModel):
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, parse_cors
-    ] = ["*"]  # Define default value here
+    ] = ["*"]  # default value
     
     ALGORITHM: str = "HS256"
 

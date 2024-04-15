@@ -5,6 +5,7 @@ from configurations.config import settings
 from configurations.db import engine
 from routes.user_route import api_router
 from sqlmodel import SQLModel
+import logging
 
 app = FastAPI(
     title = settings.PROJECT_NAME,
@@ -28,4 +29,9 @@ def root() -> JSONResponse:
 
 @app.on_event("startup")
 def on_startup():
-    SQLModel.metadata.create_all(engine)
+    logger = logging.getLogger(__name__)
+    try:
+        SQLModel.metadata.create_all(engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {e}")
