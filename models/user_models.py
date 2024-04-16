@@ -12,7 +12,7 @@ class UserCreate(SQLModel):
     )
 
 class UserDetail(BaseModel):
-    first_name: str = Field(min_length=3, max_length=50, description="Name of the User", schema_extra={'example': "John"}, title="First Name")
+    first_name: str = Field(min_length=3, max_length=50, description="Name of the User", schema_extra={'example': ["John"]}, title="First Name")
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
     phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
 
@@ -38,7 +38,7 @@ class User(UserCreate, table=True):
     artisans: List[Artisan] | None = Relationship(back_populates="user")
     first_name: str
     last_name: str
-    phone_number: PhoneNumber
+    phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': ["+234823456789"]}, title="Phone Number")
     
 class UserLogin(SQLModel):
     email: EmailStr = Field(description="Email of the user",)
