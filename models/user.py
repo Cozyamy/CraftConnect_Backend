@@ -36,13 +36,23 @@ def validate_password(value: str) -> str:
 
 
 class UserBase(SQLModel):
-    name: str = Field(
+    first_name: str = Field(
         title="name",
         min_length=4,
         max_length=100,
-        description="The full name of the user",
+        description="The first name of the user.",
         schema_extra={
-            "examples": ["John Doe"],
+            "examples": ["John"],
+        },
+    )
+
+    last_name: str = Field(
+        title="name",
+        min_length=4,
+        max_length=100,
+        description="The last name of the user.",
+        schema_extra={
+            "examples": ["Doe"],
         },
     )
 
@@ -63,13 +73,6 @@ class UserBase(SQLModel):
         schema_extra={"examples": ["+2349123456789"]},
     )
 
-    city: str = Field(
-        title="address",
-        description="the address of the user",
-    )
-
-    address: str
-
 
 class UserCreate(UserBase):
     password: Annotated[
@@ -77,7 +80,12 @@ class UserCreate(UserBase):
         Field(
             min_length=8,
             max_length=100,
-            description="The user's password.",
+            description="The user's password must:\n"
+            "- Contain at least one digit `(0-9)`.\n"
+            "- Contain at least one lowercase letter `(a-z)`.\n"
+            "- Contain at least one uppercase letter `(A-Z)`.\n"
+            "- Contain at least one special character `(e.g., !@#$%^&*()_+-=[]{}|;':\",.<>?/)`.\n"
+            "- Be between `8` and `64` characters in length.",
             schema_extra={"examples": ["Qwertyuiop123!"]},
         ),
         AfterValidator(validate_password),

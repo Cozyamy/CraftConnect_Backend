@@ -76,12 +76,9 @@ def get_firebase_current_user(request: Request):
             )
 
         token = auth_header.split(" ")[-1]
-        token_data = verify_firebase_token(token)
+        # token_data = verify_firebase_token(token)
 
-        # user = session.get(User, token_data.sub)
-        # if not user:
-        #     raise HTTPException(status_code=404, detail="User not found")
-        # return user
+        return verify_firebase_token(token)
 
     except HTTPException as error:
         return response.http_error(error)

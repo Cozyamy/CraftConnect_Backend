@@ -1,2 +1,2 @@
 from .api_response import ApiResponse
-from .user import UserCreate, User
+from .user import User, UserBase, UserCreate
