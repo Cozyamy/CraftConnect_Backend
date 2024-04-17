@@ -1,39 +1,8 @@
 import secrets
-from typing import Annotated, Literal
+from typing import Literal
 
-from fastapi import HTTPException
 from passlib.context import CryptContext
-from pydantic import AnyUrl, BeforeValidator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-def parse_cors(value: any) -> list[str] | str:
-    """
-    Parse CORS headers.
-
-    Args:
-        value (Any): Input value to parse.
-
-    Returns:
-        List[str] or str: Parsed list of strings or original input.
-
-    Raises:
-        ValueError: If the input value is neither a string nor a list.
-    """
-
-    try:
-        match value:
-            case value if isinstance(value, str) and not value.startswith("["):
-                return [item.strip() for item in value.split(",")]
-
-            case value if isinstance(value, (list, str)):
-                return value
-
-            case _:
-                raise ValueError(f"Unsupported type: {type(value)}")
-
-    except (Exception, HTTPException) as error:
-        raise error
 
 
 class AppSettings(BaseSettings):
@@ -41,6 +10,7 @@ class AppSettings(BaseSettings):
         "extra": "ignore",
         "env_file": ".env",
         "env_ignore_empty": True,
+        "env_file_encoding": "utf-8",
     }
 
     API_V1_STR: str = "/api/v1"
@@ -53,14 +23,6 @@ class AppSettings(BaseSettings):
     DOMAIN: str = "localhost"
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
-
-    # BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, parse_cors] = [
-    #     "*"
-    # ]  # Define default value here
-
-    BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = (
-        []
-    )
 
     ALGORITHM: str = "HS256"
 

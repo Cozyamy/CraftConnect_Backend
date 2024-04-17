@@ -27,11 +27,13 @@ async def create_user(
     - `HTTPException`: If there's an error during user creation.
     """
 
+    print(f"email: {email}")
+
     try:
         request = await create_new(
             data=user,
             db=db_access,
-            fb_email=email,
+            fb_mail=email,
         )
 
         if not request:

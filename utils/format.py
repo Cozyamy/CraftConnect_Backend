@@ -1,4 +1,5 @@
-from typing import Optional
+import json
+from typing import Dict, Optional
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -63,3 +64,31 @@ class Response:
 
 
 response = Response()
+
+
+def load_json_into_dict(json_to_read: str) -> Dict:
+    """
+    Load JSON data from a file into a Python dictionary.
+
+    Args:
+        json_to_read (str): Path to the JSON file.
+
+    Returns:
+        dict: Python dictionary containing the JSON data.
+
+    Raises:
+        FileNotFoundError: If the specified file is not found.
+        json.JSONDecodeError: If there's an error decoding the JSON data.
+    """
+
+    try:
+        with open(json_to_read, "r") as file:
+            content = json.load(file)
+
+        return content
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File '{json_to_read}' not found.")
+
+    except json.JSONDecodeError:
+        raise json.JSONDecodeError("Error decoding JSON data.")
