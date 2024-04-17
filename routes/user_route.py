@@ -1,24 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from sqlmodel import Session, select
-from sqlalchemy.orm import joinedload
+from sqlmodel import Session
 from dependencies.deps import get_db, get_current_user
-from models.user_models import UserCreate, User, UserDetail, Token, UserOutput, Artisan, ArtisanSearchResult, CategoriesResponse, Picture, ArtisanResponse
-from typing import Annotated, Any, List, Dict
-from fastapi.security import OAuth2PasswordRequestForm
-from utils.utils import create_access_token, validate_firebase_token_header,  get_user_id
+from models.user_models import User, UserDetail, Token
+from typing import Annotated
+from utils.utils import create_access_token, validate_firebase_token_header
 from dependencies import crud
-from dependencies.crud import artisan_to_search_result
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta
 from configurations.config import settings
 import os
-import uuid
 
 user_router = APIRouter(
-    tags=["Authentication"],
+    tags=["User"],
 )
-IMAGEDIR ='./uploaded_images/'
-os.makedirs(IMAGEDIR, exist_ok=True)
 
 @user_router.post("/register")
 async def register(
@@ -51,3 +45,10 @@ async def login(
         )
     else:
         raise HTTPException(status_code=400, detail="User Not Found")
+
+@user_router.get("/user/name", response_model=User)
+async def get_user_name(current_user: User = Depends(get_current_user)):
+    """
+    Get the name of the current user.
+    """
+    return current_user
