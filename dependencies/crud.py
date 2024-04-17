@@ -1,8 +1,7 @@
-from sqlmodel import Session, select
-from sqlalchemy import func
-from models.user_models import User, UserCreate, Artisan
+from sqlmodel import Session, select, or_, func, and_
+from models.user_models import User, Artisan, ArtisanSearchResult
 from utils.utils import verify_password
-from typing import List, Optional
+from typing import List
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
@@ -17,62 +16,54 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         return None
     return db_user
 
-def create_user(*, session: Session, email: str, user) -> User:
+def create_user(*, session: Session, email: str, user: User) -> User:
     user = User(email=email, first_name=user.first_name, last_name=user.last_name, phone_number=user.phone_number)
     session.add(user)
     session.commit()
     session.refresh(user)
     return user
 
-def get_artisans(
-    db: Session, 
-    category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    location: Optional[str] = None
-) -> List[Artisan]:
-    query = db.query(Artisan)
+def get_all_artisans(db: Session) -> List[Artisan]:
+    return db.exec(select(Artisan)).all()
 
-    if category:
-        query = query.filter(Artisan.category == category)
+def artisan_to_search_result(artisan: Artisan) -> ArtisanSearchResult:
+    return ArtisanSearchResult(
+        id=artisan.id,
+        category=artisan.category,
+        price=artisan.price,
+        location=artisan.location,
+        description=artisan.description,
+        created_at=artisan.created_at,
+        user_email=artisan.user.email,
+        user_first_name=artisan.user.first_name,
+        user_last_name=artisan.user.last_name,
+        user_phone_number=artisan.user.phone_number,
+        pictures=[picture.path for picture in artisan.pictures]
+    )
 
-    if min_price is not None:
-        query = query.filter(Artisan.price >= min_price)
+def get_artisans_by_category(db: Session, category: str) -> List[Artisan]:
+    return db.exec(
+        select(Artisan).where(func.lower(Artisan.category) == func.lower(category))
+    ).all()
 
-    if max_price is not None:
-        query = query.filter(Artisan.price <= max_price)
+def get_artisans_by_name(db: Session, name: str) -> List[Artisan]:
+    return db.exec(
+        select(Artisan).where(
+            or_(
+                func.lower(Artisan.first_name).like(f"%{name.lower()}%"), 
+                func.lower(Artisan.last_name).like(f"%{name.lower()}%")
+            )
+        )
+    ).all()
 
-    if location:
-        query = query.filter(Artisan.location == location)
+def get_artisans_by_location(db: Session, location: str) -> List[Artisan]:
+    return db.exec(
+        select(Artisan).where(Artisan.location.ilike(f"%{location}%"))
+    ).all()
 
-    return query.all()
-
-def get_all_artisans(
-    db: Session
-) -> List[Artisan]:
-    return db.query(Artisan).all()
-
-def get_artisans_by_category(
-    db: Session, 
-    category: str
-) -> List[Artisan]:
-    return db.query(Artisan).filter(func.lower(Artisan.category) == func.lower(category)).all()
-
-def get_artisans_by_name(
-    db: Session, 
-    name: str
-) -> List[Artisan]:
-    return db.query(Artisan).filter(Artisan.name.ilike(f"%{name}%")).all()
-
-def get_artisans_by_location(
-    db: Session, 
-    location: str
-) -> List[Artisan]:
-    return db.query(Artisan).filter(Artisan.location.ilike(f"%{location}%")).all()
-
-def get_artisans_by_price_range(
-    db: Session, 
-    min_price: float, 
-    max_price: float
-) -> List[Artisan]:
-    return db.query(Artisan).filter(Artisan.price >= min_price, Artisan.price <= max_price).all()
+def get_artisans_by_price_range(db: Session, min_price: float, max_price: float) -> List[Artisan]:
+    return db.exec(
+        select(Artisan).where(
+            and_(Artisan.price >= min_price, Artisan.price <= max_price)
+        )
+    ).all()

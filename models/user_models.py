@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, Field, Relationship, Column, VARCHAR
-from pydantic import BaseModel, EmailStr, ValidationError
+from pydantic import BaseModel, EmailStr
 from pydantic_extra_types.phone_numbers import PhoneNumber
-from typing import List, Optional, Any
-from datetime import datetime, timedelta
+from typing import List, Optional
+from datetime import datetime, timezone
 
 class UserCreate(SQLModel):
     email: EmailStr = Field(
@@ -24,7 +24,7 @@ class Artisan(SQLModel, table=True):
     location: str
     description: str
     pictures: List["Picture"] = Relationship(back_populates="artisan")
-    created_at: datetime = Field(sa_column_kwargs={"default": datetime.utcnow()})
+    created_at: datetime = Field(sa_column_kwargs={"default": datetime.now(timezone.utc)})
     user: "User" = Relationship(back_populates="artisans")
 
 class Picture(SQLModel, table=True):

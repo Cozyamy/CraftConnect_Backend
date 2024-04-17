@@ -8,6 +8,7 @@ from typing import Annotated, Any, List, Dict
 from fastapi.security import OAuth2PasswordRequestForm
 from utils.utils import create_access_token, validate_firebase_token_header,  get_user_id
 from dependencies import crud
+from dependencies.crud import artisan_to_search_result
 from datetime import timedelta, datetime, timezone
 from configurations.config import settings
 import os
@@ -65,7 +66,6 @@ async def create_artisan(
 ):
     if len(pictures) > 2:
         raise HTTPException(status_code=400, detail="Maximum 2 pictures allowed")
-
     if not pictures:
         raise HTTPException(status_code=400, detail="No pictures provided")
 
@@ -73,24 +73,29 @@ async def create_artisan(
     formatted_created_at = datetime.now(timezone.utc)
 
     artisan = Artisan(
-    user_id=user_id,
-    category=category,
-    price=price,
-    location=location,
-    description=description,
-    created_at=formatted_created_at
+        user_id=user_id,
+        category=category,
+        price=price,
+        location=location,
+        description=description,
+        created_at=formatted_created_at
     )
     db.add(artisan)
     db.commit()
+
     for picture in pictures:
         file_extension = picture.filename.split(".")[-1]
         picture_path = f"{uuid.uuid4()}.{file_extension}"
         picture_path = os.path.join(IMAGEDIR, picture_path)
+
         with open(picture_path, "wb") as f:
             f.write(await picture.read())
+
         picture_db = Picture(artisan_id=artisan.id, path=picture_path)
         db.add(picture_db)
+
     db.commit()
+
     return {"message": "Artisan created successfully"}
 
 @api_router.get("/artisans/all", response_model=Dict[str, List[ArtisanSearchResult]], tags=["browse artisans"])
@@ -98,107 +103,26 @@ async def browse_all_artisans(
     db: Session = Depends(get_db)
 ):
     artisans = crud.get_all_artisans(db)
-    artisan_results = []
-    for artisan in artisans:
-        artisan_result = ArtisanSearchResult(
-            id=artisan.id,
-            category=artisan.category,
-            price=artisan.price,
-            location=artisan.location,
-            description=artisan.description,
-            created_at=artisan.created_at,
-            user_email=artisan.user.email,
-            user_first_name=artisan.user.first_name,
-            user_last_name=artisan.user.last_name,
-            user_phone_number=artisan.user.phone_number,
-            pictures=[picture.path for picture in artisan.pictures]
-        )
-        artisan_results.append(artisan_result)
+    artisan_results = [artisan_to_search_result(artisan) for artisan in artisans]
     return {"artisans": artisan_results}
 
 
 @api_router.get("/artisans/category/{category}", response_model=List[ArtisanSearchResult], tags=["search artisans"])
-async def search_artisans_by_category(
-    category: str,
-    db: Session = Depends(get_db)
-):
+async def search_artisans_by_category(category: str, db: Session = Depends(get_db)):
     artisans = crud.get_artisans_by_category(db, category)
-    artisan_results = []
-    for artisan in artisans:
-        artisan_result = ArtisanSearchResult(
-            id=artisan.id,
-            category=artisan.category,
-            price=artisan.price,
-            location=artisan.location,
-            description=artisan.description,
-            created_at=artisan.created_at,
-            user_email=artisan.user.email,
-            pictures=[picture.path for picture in artisan.pictures]
-        )
-        artisan_results.append(artisan_result)
-    return artisan_results
+    return [artisan_to_search_result(artisan) for artisan in artisans]
 
 @api_router.get("/artisans/name/{name}", response_model=List[ArtisanSearchResult], tags=["search artisans"])
-async def search_artisans_by_name(
-    name: str,
-    db: Session = Depends(get_db)
-):
+async def search_artisans_by_name(name: str, db: Session = Depends(get_db)):
     artisans = crud.get_artisans_by_name(db, name)
-    artisan_results = []
-    for artisan in artisans:
-        artisan_result = ArtisanSearchResult(
-            id=artisan.id,
-            category=artisan.category,
-            price=artisan.price,
-            location=artisan.location,
-            description=artisan.description,
-            created_at=artisan.created_at,
-            user_email=artisan.user.email,
-            pictures=[picture.path for picture in artisan.pictures]
-        )
-        artisan_results.append(artisan_result)
-    return artisan_results
+    return [artisan_to_search_result(artisan) for artisan in artisans]
 
 @api_router.get("/artisans/location/{location}", response_model=List[ArtisanSearchResult], tags=["search artisans"])
-async def search_artisans_by_location(
-    location: str,
-    db: Session = Depends(get_db)
-):
+async def search_artisans_by_location(location: str, db: Session = Depends(get_db)):
     artisans = crud.get_artisans_by_location(db, location)
-    artisan_results = []
-    for artisan in artisans:
-        artisan_result = ArtisanSearchResult(
-            id=artisan.id,
-            category=artisan.category,
-            price=artisan.price,
-            location=artisan.location,
-            description=artisan.description,
-            created_at=artisan.created_at,
-            user_email=artisan.user.email,
-            pictures=[picture.path for picture in artisan.pictures]
-        )
-        artisan_results.append(artisan_result)
-    return artisan_results
-
+    return [artisan_to_search_result(artisan) for artisan in artisans]
 
 @api_router.get("/artisans/price", response_model=List[ArtisanSearchResult], tags=["search artisans"])
-async def search_artisans_by_price_range(
-    min_price: float, 
-    max_price: float,
-    db: Session = Depends(get_db)
-):
+async def search_artisans_by_price_range(min_price: float, max_price: float, db: Session = Depends(get_db)):
     artisans = crud.get_artisans_by_price_range(db, min_price, max_price)
-    artisan_results = []
-    for artisan in artisans:
-        artisan_result = ArtisanSearchResult(
-            id=artisan.id,
-            category=artisan.category,
-            price=artisan.price,
-            location=artisan.location,
-            description=artisan.description,
-            created_at=artisan.created_at,
-            user_email=artisan.user.email,
-            pictures=[picture.path for picture in artisan.pictures]
-        )
-        artisan_results.append(artisan_result)
-    return artisan_results
+    return [artisan_to_search_result(artisan) for artisan in artisans]

@@ -11,10 +11,12 @@ reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/"
 )
 
-
-def get_db() -> Generator[Session, None, None]:
-    with Session(engine) as session:
+def get_db() -> Generator:
+    session = Session(engine)
+    try:
         yield session
+    finally:
+        session.close()
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
@@ -28,5 +30,3 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
-
-#get current user
