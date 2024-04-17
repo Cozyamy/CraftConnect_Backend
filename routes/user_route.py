@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 from dependencies.deps import get_db, get_current_user
-from models.user_models import User, UserDetail, Token
-from typing import Annotated
+from models.user_models import User, UserDetail, Token, OrderDetails, Order, UserCreate
+from typing import Annotated, Any
 from utils.utils import create_access_token, validate_firebase_token_header
 from dependencies import crud
 from datetime import timedelta
 from configurations.config import settings
-import os
+import logging
 
 user_router = APIRouter(
-    tags=["User"],
+    tags=["User"]
 )
 
 @user_router.post("/register")
@@ -52,3 +52,25 @@ async def get_user_name(current_user: User = Depends(get_current_user)):
     Get the name of the current user.
     """
     return current_user
+
+def submit_order(
+    order_details: OrderDetails,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Any:
+    new_order = Order(
+        user_id=current_user.id,
+        artisan_id=order_details.artisan_id,
+        location=order_details.location,
+        work_details=order_details.work_details,
+        serial_number=order_details.serial_number,
+        category=order_details.category,
+        date=order_details.date,
+        status=order_details.status
+    )
+
+    current_user.orders.append(new_order)
+    db.add(new_order)
+    db.commit()
+
+    return {"message": "Order submitted successfully"}

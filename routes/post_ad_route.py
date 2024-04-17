@@ -6,7 +6,7 @@ from typing import List
 from dependencies import crud
 
 post_ad_router = APIRouter(
-    tags=["Post ad"],
+    tags=["Post ad"]
 )
 
 @post_ad_router.post("/artisans/create/", response_model=ArtisanResponse)

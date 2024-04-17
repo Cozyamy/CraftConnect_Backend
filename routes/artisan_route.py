@@ -7,7 +7,7 @@ from dependencies import crud
 from dependencies.crud import artisan_to_search_result
 
 artisan_router = APIRouter(
-    tags=["Artisan"],
+    tags=["Artisan"]
 )
 
 @artisan_router.get("/artisans/all", response_model=Dict[str, List[ArtisanSearchResult]])

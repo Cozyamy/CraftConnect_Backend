@@ -4,11 +4,7 @@ from pydantic_extra_types.phone_numbers import PhoneNumber
 from typing import List, Optional
 from datetime import datetime, timezone
 
-
-class UserBase(SQLModel):
-    id: Optional[int] = Field(default=None, primary_key=True)
-
-class UserCreate(UserBase):
+class UserCreate(SQLModel):
     email: EmailStr = Field(
         ...,
         sa_column=Column("email", VARCHAR, unique=True, index=True),
@@ -20,7 +16,33 @@ class UserDetail(BaseModel):
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
     phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
 
+class Artisan(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    category: str
+    price: float
+    location: str
+    description: str
+    pictures: List["Picture"] = Relationship(back_populates="artisan")
+    created_at: datetime = Field(sa_column_kwargs={"default": datetime.now(timezone.utc)})
+    user: "User" = Relationship(back_populates="artisans")
+    orders: List["OrderDetails"] | None = Relationship(back_populates="artisan")
+
+class Picture(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    artisan_id: int = Field(foreign_key="artisan.id")
+    path: str
+    artisan: Artisan = Relationship(back_populates="pictures")
+
+class User(UserCreate, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    artisans: List[Artisan] | None = Relationship(back_populates="user")
+    first_name: str
+    last_name: str
+    phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': ["+234823456789"]}, title="Phone Number")
+    
 class UserLogin(SQLModel):
+    email: EmailStr = Field(description="Email of the user",)
     password: str = Field(min_length=8, max_length=100, description="Password of the user",title="Password")
 
 class ArtisanCreate(BaseModel):
@@ -67,46 +89,14 @@ class UserOutput(SQLModel):
 class Order(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
-    artisan_id: int = Field(foreign_key="artisan.id")
-    location: str
-    work_details: str
     serial_number: str
     category: str
     date: datetime
-    status: str = Field(default="pending")
+    status: str
 
-class OrderDetails(SQLModel, table=True):
+class OrderDetails(UserCreate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    artisan_id: int = Field(foreign_key="artisan.id")
     location: str
     work_details: str
-    serial_number: str
-    category: str
-    date: datetime
-    status: str = Field(default="pending")
+    artisan_id: int = Field(foreign_key="artisan.id")
     artisan: "Artisan" = Relationship(back_populates="orders")
-
-class Artisan(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    category: str
-    price: float
-    location: str
-    description: str
-    pictures: List["Picture"] = Relationship(back_populates="artisan")
-    created_at: datetime = Field(sa_column_kwargs={"default": datetime.now(timezone.utc)})
-    user: "User" = Relationship(back_populates="artisans")
-    orders: List[OrderDetails] | None = Relationship(back_populates="artisan")
-
-class Picture(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    artisan_id: int = Field(foreign_key="artisan.id")
-    path: str
-    artisan: Artisan = Relationship(back_populates="pictures")
-
-class User(UserCreate, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    artisans: List[Artisan] | None = Relationship(back_populates="user")
-    first_name: str
-    last_name: str
-    phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': ["+234823456789"]}, title="Phone Number")
