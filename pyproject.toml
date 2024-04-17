@@ -14,6 +14,12 @@ sqlmodel = "^0.0.16"
 pydantic = {extras = ["email"], version = "^2.7.0"}
 phonenumbers = "^8.13.34"
 pydantic-extra-types = "^2.6.0"
+python-jose = "^3.3.0"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+firebase-admin = "^6.5.0"
+pyjwt = "^2.8.0"
+python-multipart = "^0.0.9"
+pydantic-settings = "^2.2.1"
 
 
 [build-system]

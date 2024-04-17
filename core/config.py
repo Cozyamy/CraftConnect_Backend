@@ -1,7 +1,8 @@
 import secrets
 from typing import Annotated, Any, Literal
 
-from pydantic import AnyUrl, BaseModel
+from pydantic import AnyUrl, BeforeValidator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def parse_cors(value: Any) -> list[str] | str:
@@ -14,7 +15,13 @@ def parse_cors(value: Any) -> list[str] | str:
     raise ValueError(value)
 
 
-class AppSettings(BaseModel):
+class AppSettings(BaseSettings):
+    model_config: SettingsConfigDict = {
+        "extra": "ignore",
+        "env_file": ".env",
+        "env_ignore_empty": True,
+    }
+
     API_V1_STR: str = "/api/v1"
 
     SECRET_KEY: str = secrets.token_urlsafe(32)
@@ -26,9 +33,13 @@ class AppSettings(BaseModel):
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
-    BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, parse_cors] = [
-        "*"
-    ]  # Define default value here
+    # BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, parse_cors] = [
+    #     "*"
+    # ]  # Define default value here
+
+    BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = (
+        []
+    )
 
     ALGORITHM: str = "HS256"
 

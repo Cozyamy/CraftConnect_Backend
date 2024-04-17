@@ -41,6 +41,9 @@ class UserBase(SQLModel):
         min_length=4,
         max_length=100,
         description="The full name of the user",
+        schema_extra={
+            "examples": ["John Doe"],
+        },
     )
 
     mail: EmailStr = Field(
@@ -57,6 +60,7 @@ class UserBase(SQLModel):
     phone: PhoneNumber = Field(
         title="phone number",
         description="The user's phone number.",
+        schema_extra={"examples": ["+2349123456789"]},
     )
 
     city: str = Field(
@@ -67,13 +71,14 @@ class UserBase(SQLModel):
     address: str
 
 
-class UserCreate(UserBase, table=True):
+class UserCreate(UserBase):
     password: Annotated[
         str,
         Field(
             min_length=8,
             max_length=100,
             description="The user's password.",
+            schema_extra={"examples": ["Qwertyuiop123!"]},
         ),
         AfterValidator(validate_password),
     ]
@@ -81,5 +86,3 @@ class UserCreate(UserBase, table=True):
 
 class User(UserCreate, table=True):
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
-
-

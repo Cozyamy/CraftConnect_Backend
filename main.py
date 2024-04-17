@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from core import settings
+from core import SQLModel, engine, settings
 from routes import users
 
 # init fastapi server
@@ -38,13 +38,21 @@ async def root():
 
     # Redirecting to the API documentation page using a 302 status code
     return RedirectResponse(
-        url="/docs",
+        url="/redoc",
         status_code=status.HTTP_302_FOUND,
     )
 
 
-# run script
-if __name__ == "__main__":
+def main():
     import uvicorn
 
+    # start db engine
+    SQLModel.metadata.create_all(engine)
+
+    # run application
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+# run script
+if __name__ == "__main__":
+    main()
