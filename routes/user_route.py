@@ -8,7 +8,7 @@ from typing import Annotated, Any, List, Dict
 from fastapi.security import OAuth2PasswordRequestForm
 from utils.utils import create_access_token, validate_firebase_token_header,  get_user_id
 from dependencies import crud
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from configurations.config import settings
 import os
 import uuid
@@ -60,7 +60,7 @@ async def create_artisan(
     location: str,
     description: str,
     pictures: List[UploadFile] = File(...),
-    authorization: str = None,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     if len(pictures) > 2:
@@ -69,16 +69,16 @@ async def create_artisan(
     if not pictures:
         raise HTTPException(status_code=400, detail="No pictures provided")
 
-    user_id = get_user_id(authorization)
-    formatted_created_at = datetime.utcnow()
+    user_id = current_user.id
+    formatted_created_at = datetime.now(timezone.utc)
 
     artisan = Artisan(
-        user_id=user_id,
-        category=category,
-        price=price,
-        location=location,
-        description=description,
-        created_at=formatted_created_at
+    user_id=user_id,
+    category=category,
+    price=price,
+    location=location,
+    description=description,
+    created_at=formatted_created_at
     )
     db.add(artisan)
     db.commit()
@@ -108,6 +108,9 @@ async def browse_all_artisans(
             description=artisan.description,
             created_at=artisan.created_at,
             user_email=artisan.user.email,
+            user_first_name=artisan.user.first_name,
+            user_last_name=artisan.user.last_name,
+            user_phone_number=artisan.user.phone_number,
             pictures=[picture.path for picture in artisan.pictures]
         )
         artisan_results.append(artisan_result)

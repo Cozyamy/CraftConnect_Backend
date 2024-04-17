@@ -20,6 +20,7 @@ pydantic-extra-types = "^2.6.0"
 phonenumbers = "^8.13.34"
 pydantic = {extras = ["email"], version = "^2.7.0"}
 firebase-admin = "^6.5.0"
+alembic = "^1.13.1"
 
 
 [build-system]

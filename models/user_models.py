@@ -64,6 +64,9 @@ class ArtisanSearchResult(BaseModel):
     description: str
     created_at: datetime
     user_email: EmailStr
+    user_first_name: str
+    user_last_name: str
+    user_phone_number: str
     pictures: List[str]
 
     class Config:
