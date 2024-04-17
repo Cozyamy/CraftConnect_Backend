@@ -14,15 +14,13 @@ from configurations.config import settings
 import os
 import uuid
 
-user_router = APIRouter()
+user_router = APIRouter(
+    tags=["Authentication"],
+)
 IMAGEDIR ='./uploaded_images/'
 os.makedirs(IMAGEDIR, exist_ok=True)
 
-@user_router.get("/", tags=["home"])
-async def home():
-    return {"message": "Welcome to CraftConnect!"}
-
-@user_router.post("/register", tags=["register"])
+@user_router.post("/register")
 async def register(
     email: Annotated[str, Depends(validate_firebase_token_header)],
     user: UserDetail,
@@ -35,7 +33,7 @@ async def register(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@user_router.post("/login", tags=["login"])
+@user_router.post("/login")
 async def login(
     db: Annotated[Session, Depends(get_db)],
     email: Annotated[str, Depends(validate_firebase_token_header)]

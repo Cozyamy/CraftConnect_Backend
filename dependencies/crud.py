@@ -1,7 +1,14 @@
+from fastapi import HTTPException, UploadFile
 from sqlmodel import Session, select, or_, func, and_, join
-from models.user_models import User, Artisan, ArtisanSearchResult
+from models.user_models import User, Artisan, ArtisanSearchResult, Picture, ArtisanResponse
 from utils.utils import verify_password
 from typing import List
+from datetime import datetime, timezone
+import os
+import uuid
+
+IMAGEDIR ='./uploaded_images/'
+os.makedirs(IMAGEDIR, exist_ok=True)
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
@@ -22,6 +29,40 @@ def create_user(*, session: Session, email: str, user: User) -> User:
     session.commit()
     session.refresh(user)
     return user
+
+async def post_ad(db: Session, artisan: Artisan, pictures: List[UploadFile]):
+    db.add(artisan)
+    db.commit()
+
+    for picture in pictures:
+        file_extension = picture.filename.split(".")[-1]
+        picture_path = f"{uuid.uuid4()}.{file_extension}"
+        picture_path = os.path.join(IMAGEDIR, picture_path)
+
+        with open(picture_path, "wb") as f:
+            f.write(await picture.read())
+
+        picture_db = Picture(artisan_id=artisan.id, path=picture_path)
+        db.add(picture_db)
+
+    db.commit()
+
+def validate_pictures(pictures: List[UploadFile]):
+    if len(pictures) > 2:
+        raise HTTPException(status_code=400, detail="Maximum 2 pictures allowed")
+    if not pictures:
+        raise HTTPException(status_code=400, detail="No pictures provided")
+
+def post_ad_object(user_id: int, category: str, price: float, location: str, description: str):
+    formatted_created_at = datetime.now(timezone.utc)
+    return Artisan(
+        user_id=user_id,
+        category=category,
+        price=price,
+        location=location,
+        description=description,
+        created_at=formatted_created_at
+    )
 
 def get_all_artisans(db: Session) -> List[Artisan]:
     return db.exec(select(Artisan)).all()
