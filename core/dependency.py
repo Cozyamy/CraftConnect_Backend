@@ -3,6 +3,7 @@ from typing import Annotated, Generator
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
+from fastapi.responses import JSONResponse
 
 from models import User
 from utils import response, verify_auth_token, verify_firebase_token
@@ -29,7 +30,7 @@ SESSION_DEP = Annotated[Session, Depends(db_session)]
 TOKEN_DEP = Annotated[str, Depends(OAUTH2_URL)]
 
 
-def get_current_user(session: SESSION_DEP, token: TOKEN_DEP) -> User:
+def get_current_user(session: SESSION_DEP, token: TOKEN_DEP) -> User | JSONResponse:
     """
     Get the current user based on the provided session and token.
 
@@ -63,7 +64,19 @@ def get_current_user(session: SESSION_DEP, token: TOKEN_DEP) -> User:
 CURRENT_USER_DEPENDENCY = Annotated[User, Depends(get_current_user)]
 
 
-def get_firebase_current_user(request: Request):
+def get_firebase_current_user(request: Request) -> str | JSONResponse:
+    """
+    Get the current Firebase user based on the request headers.
+
+    Args:
+        request (Request): FastAPI request object.
+
+    Returns:
+        str: User email if token is valid.
+
+    Raises:
+        HTTPException: If Firebase token is missing or invalid.
+    """
 
     try:
         headers = request.headers

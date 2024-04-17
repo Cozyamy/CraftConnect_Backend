@@ -16,11 +16,11 @@ async def exists_in_db(
 
 async def create(
     param: dict | Any,
-    model: type,
+    table: type,
     db: Session,
 ) -> Any:
     # init db variable
-    created = model(**param)
+    created = table(**param)
 
     # add to database
     db.add(created)

@@ -38,7 +38,7 @@ def validate_password(value: str) -> str:
 class UserBase(SQLModel):
     first_name: str = Field(
         title="name",
-        min_length=4,
+        min_length=3,
         max_length=100,
         description="The first name of the user.",
         schema_extra={
@@ -48,7 +48,7 @@ class UserBase(SQLModel):
 
     last_name: str = Field(
         title="name",
-        min_length=4,
+        min_length=3,
         max_length=100,
         description="The last name of the user.",
         schema_extra={
@@ -56,7 +56,7 @@ class UserBase(SQLModel):
         },
     )
 
-    mail: EmailStr = Field(
+    email: EmailStr = Field(
         title="email",
         sa_column=Column(
             "email",
@@ -67,7 +67,7 @@ class UserBase(SQLModel):
         description="The user's email address.",
     )
 
-    phone: PhoneNumber = Field(
+    phone_number: PhoneNumber = Field(
         title="phone number",
         description="The user's phone number.",
         schema_extra={"examples": ["+2349123456789"]},

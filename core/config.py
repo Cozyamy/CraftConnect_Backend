@@ -1,18 +1,39 @@
 import secrets
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
+from fastapi import HTTPException
+from passlib.context import CryptContext
 from pydantic import AnyUrl, BeforeValidator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def parse_cors(value: Any) -> list[str] | str:
-    if isinstance(value, str) and not value.startswith("["):
-        return [item.strip() for item in value.split(",")]
+def parse_cors(value: any) -> list[str] | str:
+    """
+    Parse CORS headers.
 
-    elif isinstance(value, (list, str)):
-        return value
+    Args:
+        value (Any): Input value to parse.
 
-    raise ValueError(value)
+    Returns:
+        List[str] or str: Parsed list of strings or original input.
+
+    Raises:
+        ValueError: If the input value is neither a string nor a list.
+    """
+
+    try:
+        match value:
+            case value if isinstance(value, str) and not value.startswith("["):
+                return [item.strip() for item in value.split(",")]
+
+            case value if isinstance(value, (list, str)):
+                return value
+
+            case _:
+                raise ValueError(f"Unsupported type: {type(value)}")
+
+    except (Exception, HTTPException) as error:
+        raise error
 
 
 class AppSettings(BaseSettings):
@@ -52,6 +73,11 @@ class AppSettings(BaseSettings):
     SERVER_NAME: str = "CraftConnectBackend"
 
     SESSION_TOKEN_EXPIRE_SECONDS: int = 43200
+
+    PASSWORD_CONTEXT: CryptContext = CryptContext(
+        schemes=["bcrypt"],
+        deprecated="auto",
+    )
 
 
 settings = AppSettings()

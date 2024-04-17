@@ -12,6 +12,20 @@ users: APIRouter = APIRouter(prefix="/users", tags=["authentication"])
 async def create_user(
     user: UserCreate, email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP
 ):
+    """
+    Endpoint to register a new user.
+
+    Args:
+    - `user (UserCreate)`: User data for registration.
+    - `email (FIREBASE_USER_DEPENDENCY)`: Firebase user email.
+    - `db_access (SESSION_DEP)`: Database session.
+
+    Returns:
+    - `JSONResponse`: JSON formatted response.
+
+    Raises:
+    - `HTTPException`: If there's an error during user creation.
+    """
 
     try:
         request = await create_new(
@@ -34,18 +48,3 @@ async def create_user(
 
     except HTTPException as error:
         return response.http_error(error)
-
-
-# @users.post(path="/register")
-# async def create_user(
-#     user: UserCreate, email: FIREBASE_USER_DEPENDENCY, db: SESSION_DEP
-# ):
-#     try:
-#         # Simulating a condition where an exception should be raised
-#         if not user.mail.endswith("@example.com"):
-#             raise HTTPException(status_code=422, detail="Invalid email domain.")
-#         return user
-
-#     except HTTPException as error:
-#         # Here you would handle the HTTPException, perhaps logging it or modifying the error message
-#         return response.http_error(error)
