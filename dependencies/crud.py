@@ -1,4 +1,4 @@
-from sqlmodel import Session, select, or_, func, and_
+from sqlmodel import Session, select, or_, func, and_, join
 from models.user_models import User, Artisan, ArtisanSearchResult
 from utils.utils import verify_password
 from typing import List
@@ -47,14 +47,26 @@ def get_artisans_by_category(db: Session, category: str) -> List[Artisan]:
     ).all()
 
 def get_artisans_by_name(db: Session, name: str) -> List[Artisan]:
-    return db.exec(
-        select(Artisan).where(
-            or_(
-                func.lower(Artisan.first_name).like(f"%{name.lower()}%"), 
-                func.lower(Artisan.last_name).like(f"%{name.lower()}%")
+    name_parts = name.split()
+    if len(name_parts) == 2:
+        first_name, last_name = name_parts
+        return db.exec(
+            select(Artisan).select_from(join(Artisan, User)).where(
+                and_(
+                    func.lower(User.first_name).like(f"%{first_name.lower()}%"),
+                    func.lower(User.last_name).like(f"%{last_name.lower()}%")
+                )
             )
-        )
-    ).all()
+        ).all()
+    else:
+        return db.exec(
+            select(Artisan).select_from(join(Artisan, User)).where(
+                or_(
+                    func.lower(User.first_name).like(f"%{name.lower()}%"),
+                    func.lower(User.last_name).like(f"%{name.lower()}%")
+                )
+            )
+        ).all()
 
 def get_artisans_by_location(db: Session, location: str) -> List[Artisan]:
     return db.exec(

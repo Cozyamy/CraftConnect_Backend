@@ -70,7 +70,7 @@ class ArtisanSearchResult(BaseModel):
     pictures: List[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Token(SQLModel):
     access_token: str
