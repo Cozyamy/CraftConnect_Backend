@@ -38,7 +38,7 @@ class UserBase(SQLModel):
         description="The user's email address.",
     )
 
-    phone_number: PhoneNumber = Field(
+    phone_number: PhoneNumber | None = Field(
         title="phone number",
         description="The user's phone number.",
         schema_extra={"examples": ["+2349123456789"]},
@@ -68,3 +68,5 @@ class UserCreate(UserBase):
 
 class User(UserCreate, table=True):
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+
+    # is_artisan: bool = Field(default=False)

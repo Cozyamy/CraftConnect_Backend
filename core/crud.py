@@ -37,7 +37,28 @@ async def get_all(model: type, db: Session) -> Any:
 
 async def get_by_param(
     param: str | int | Any,
+    arg: str,
     db: Session,
     model: type,
+    op: str = "==",
 ) -> Any:
-    return db.exec()
+
+    # define valid operations in db
+    operations = {
+        "==": getattr(model, arg) == param,
+        "!=": getattr(model, arg) != param,
+        ">": getattr(model, arg) > param,
+        "<": getattr(model, arg) < param,
+        ">=": getattr(model, arg) >= param,
+        "<=": getattr(model, arg) <= param,
+    }
+
+    # check if the operator is valid
+    if op not in operations:
+        raise ValueError(f"Invalid operator: {op}")
+
+    # construct the query
+    query = select(model).where(operations[op])
+
+    # return value from db
+    return db.exec(statement=query).first()

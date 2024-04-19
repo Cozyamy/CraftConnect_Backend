@@ -1,1 +1,1 @@
-from .user import create_new
+from .user import create_new, log_in

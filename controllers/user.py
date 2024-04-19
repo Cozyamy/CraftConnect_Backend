@@ -1,9 +1,11 @@
+from datetime import timedelta
+
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
-from core import SESSION_DEP, crud
-from models import User
-from utils import handle_firebase_phonenumber, hash_password, response
+from core import SESSION_DEP, crud, settings
+from models import Token, User
+from utils import create_access_token, handle_firebase_phonenumber, response
 
 
 async def create_new(data: dict, db: SESSION_DEP, fb_mail) -> User | JSONResponse:
@@ -24,11 +26,10 @@ async def create_new(data: dict, db: SESSION_DEP, fb_mail) -> User | JSONRespons
 
     try:
         new_user: User = {
-            "first_name": data.get("first_name"),
-            "last_name": data.get("last_name"),
-            "phone_number": handle_firebase_phonenumber(data.get("phone")),
+            "first_name": data.first_name,
+            "last_name": data.last_name,
+            "phone_number": await handle_firebase_phonenumber(data.phone_number),
             "email": fb_mail,
-            "password": hash_password(data.get("password")),
         }
 
         db_user: User = await crud.create(
@@ -37,7 +38,33 @@ async def create_new(data: dict, db: SESSION_DEP, fb_mail) -> User | JSONRespons
             db=db,
         )
 
-        return db_user
+        return new_user
+
+    except HTTPException as error:
+        return response.http_error(error)
+
+
+async def log_in(data: any, db: SESSION_DEP):
+
+    try:
+        user: User = crud.get_by_param(
+            param=data,
+            arg="email",
+            db=db,
+            model=User,
+            op="==",
+        )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+        return Token(
+            access=await create_access_token(
+                subject=user.id, expires=access_token_expires
+            )
+        )
 
     except HTTPException as error:
         return response.http_error(error)

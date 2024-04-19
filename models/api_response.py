@@ -8,3 +8,8 @@ class ApiResponse(BaseModel):
     status: str
     message: str
     data: Optional[Dict]
+
+
+class Token(BaseModel):
+    access: str
+    type: str = "bearer"

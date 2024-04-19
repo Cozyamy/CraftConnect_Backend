@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from core import SQLModel, engine, settings
-from routes import users
+from routes import auth
 
 # init fastapi server
 app = FastAPI(
@@ -15,7 +15,7 @@ app = FastAPI(
 
 # routes
 app.include_router(
-    router=users,
+    router=auth,
     prefix=settings.API_V1_STR,
 )
 

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException
 
-from controllers import create_new
+from controllers import create_new, log_in
 from core import FIREBASE_USER_DEPENDENCY, SESSION_DEP
 from models import UserBase, UserCreate
 from utils import response
 
-users: APIRouter = APIRouter(prefix="/users", tags=["authentication"])
+auth: APIRouter = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@users.post(path="/register", response_model=UserBase)
+@auth.post(path="/register", response_model=UserBase)
 async def create_user(
     user: UserCreate, email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP
 ):
@@ -27,8 +27,6 @@ async def create_user(
     - `HTTPException`: If there's an error during user creation.
     """
 
-    print(f"email: {email}")
-
     try:
         request = await create_new(
             data=user,
@@ -45,7 +43,31 @@ async def create_user(
         return response.to_json(
             status_code=201,
             status="success",
-            message="User registratin completed.",
+            message="User registration completed.",
+            data=None,
+        )
+
+    except HTTPException as error:
+        return response.http_error(error)
+
+
+@auth.post("/login")
+async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
+
+    try:
+        request = await log_in(data=email, invoke_db=db_access)
+
+        if not request:
+            raise HTTPException(
+                status_code=404,
+                detail=f"User not found.",
+            )
+
+        return response.to_json(
+            status_code=200,
+            status="success",
+            message="User logged in success.",
+            data=None,
         )
 
     except HTTPException as error:
