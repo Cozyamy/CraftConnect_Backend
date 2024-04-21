@@ -18,7 +18,7 @@ class UserCreate(UserBase):
 class UserDetail(BaseModel):
     first_name: str = Field(min_length=3, max_length=50, description="Name of the User", schema_extra={'example': ["John"]}, title="First Name")
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
-    phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
+    phone_number: Optional[str] = Field(description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
 
 class UserLogin(SQLModel):
     password: str = Field(min_length=8, max_length=100, description="Password of the user",title="Password")
@@ -109,4 +109,4 @@ class User(UserCreate, table=True):
     artisans: List[Artisan] | None = Relationship(back_populates="user")
     first_name: str
     last_name: str
-    phone_number: PhoneNumber = Field(description="Phone Number", schema_extra={'example': ["+234823456789"]}, title="Phone Number")
+    phone_number: Optional[str] = Field(description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
