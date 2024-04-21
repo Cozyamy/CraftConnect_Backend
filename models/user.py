@@ -40,7 +40,7 @@ class UserBase(SQLModel):
 
 
 class UserCreate(UserBase):
-    phone_number: Optional[str] = Field(
+    phone_number: str | None = Field(
         default=None,
         title="phone number",
         description="The user's phone number.",

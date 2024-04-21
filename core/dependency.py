@@ -89,12 +89,11 @@ def get_firebase_current_user(request: Request) -> str | JSONResponse:
             )
 
         token = auth_header.split(" ")[-1]
-        # token_data = verify_firebase_token(token)
 
         return verify_firebase_token(token)
 
-    except HTTPException as error:
-        return response.http_error(error)
+    except Exception as error:
+        raise error
 
 
 FIREBASE_USER_DEPENDENCY = Annotated[str, Depends(get_firebase_current_user)]

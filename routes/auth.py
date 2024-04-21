@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from controllers import create_new, log_in
 from core import FIREBASE_USER_DEPENDENCY, SESSION_DEP
-from models import UserBase, UserCreate
+from models import UserBase, UserCreate, ApiResponse
 from utils import response
 
 auth: APIRouter = APIRouter(prefix="/auth", tags=["authentication"])
@@ -43,7 +43,7 @@ async def create_user(
         return response.to_json(
             status_code=201,
             status="success",
-            message="User registration completed.",
+            message="User registration completed 😀.",
             data=None,
         )
 
@@ -51,7 +51,7 @@ async def create_user(
         return response.http_error(error)
 
 
-@auth.post("/login")
+@auth.post(path="/login", response_model=ApiResponse)
 async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
     """
     Logs in a user based on the provided email.
@@ -79,7 +79,7 @@ async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
         return response.to_json(
             status_code=200,
             status="success",
-            message="User logged in success.",
+            message="User log in success 😊.",
             data=request.model_dump(),
         )
 

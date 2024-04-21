@@ -25,26 +25,43 @@ async def create_new(data: dict, db: SESSION_DEP, fb_mail) -> User | JSONRespons
     """
 
     try:
-        new_user: User = {
+        user_exist = await crud.get_by_param(
+            param=fb_mail,
+            arg="email",
+            db=db,
+            model=User,
+            op="==",
+        )
+
+        print(user_exist)
+
+
+        if user_exist:
+            raise HTTPException(
+                status_code=400,
+                detail=f"User with this email already exists.",
+            )
+
+        db_user: User = {
             "first_name": data.first_name,
             "last_name": data.last_name,
             "phone_number": await handle_firebase_phonenumber(data.phone_number),
             "email": fb_mail,
         }
 
-        db_user: User = await crud.create(
-            param=new_user,
+        user: User = await crud.create(
+            param=db_user,
             table=User,
             db=db,
         )
 
-        return new_user
+        return db_user
 
-    except HTTPException as error:
-        return response.http_error(error)
+    except Exception as error:
+        raise error
 
 
-async def log_in(data: any, db: SESSION_DEP):
+async def log_in(data: str, db: SESSION_DEP):
 
     try:
         user: User = await crud.get_by_param(
@@ -66,5 +83,5 @@ async def log_in(data: any, db: SESSION_DEP):
             )
         )
 
-    except HTTPException as error:
-        return response.http_error(error)
+    except Exception as error:
+        raise error

@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 
 class ApiResponse(BaseModel):
-    status_code: int
-    status: str
-    message: str
+    status_code: int = 200
+    status: str = "pending"
+    message: str = "transacting... please wait. 🌞"
     data: Optional[Dict]
 
 
