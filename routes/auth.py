@@ -53,9 +53,22 @@ async def create_user(
 
 @auth.post("/login")
 async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
+    """
+    Logs in a user based on the provided email.
+
+    Args:
+    - `email (str)`: The email address of the user (obtained from the dependency injection).
+    - `db_access (object)`: The database access object (obtained from the dependency injection).
+
+    Returns:
+    - `JSONResponse`: JSON response containing the login status and user data if successful.
+
+    Raises:
+    - `HTTPException`: If the user is not found (status code 404).
+    """
 
     try:
-        request = await log_in(data=email, invoke_db=db_access)
+        request = await log_in(data=email, db=db_access)
 
         if not request:
             raise HTTPException(
@@ -67,7 +80,7 @@ async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
             status_code=200,
             status="success",
             message="User logged in success.",
-            data=None,
+            data=request.model_dump(),
         )
 
     except HTTPException as error:

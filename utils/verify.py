@@ -16,10 +16,7 @@ def verify_firebase_token(token):
 
     try:
         user = auth.verify_id_token(id_token=token)
-        print(user)
-        # print(user.get("displayName"))
         return user.get("email")
-        # return user.get("displayName")
 
     except Exception as error:
         return response.http_error(error)

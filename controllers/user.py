@@ -47,7 +47,7 @@ async def create_new(data: dict, db: SESSION_DEP, fb_mail) -> User | JSONRespons
 async def log_in(data: any, db: SESSION_DEP):
 
     try:
-        user: User = crud.get_by_param(
+        user: User = await crud.get_by_param(
             param=data,
             arg="email",
             db=db,

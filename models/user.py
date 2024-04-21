@@ -1,4 +1,4 @@
-import re
+from typing import Optional
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
@@ -38,14 +38,15 @@ class UserBase(SQLModel):
         description="The user's email address.",
     )
 
-    phone_number: PhoneNumber | None = Field(
+
+class UserCreate(UserBase):
+    phone_number: Optional[str] = Field(
+        default=None,
         title="phone number",
         description="The user's phone number.",
         schema_extra={"examples": ["+2349123456789"]},
     )
 
-
-class UserCreate(UserBase):
     #     password: Optional[
     #         Annotated[
     #             str,
@@ -63,7 +64,6 @@ class UserCreate(UserBase):
     #             AfterValidator(validate_password),
     #         ]
     #     ] = None
-    pass
 
 
 class User(UserCreate, table=True):

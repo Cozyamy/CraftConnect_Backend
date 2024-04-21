@@ -3,17 +3,6 @@ from typing import Any
 from sqlmodel import Session, select
 
 
-async def exists_in_db(
-    param: Any,
-    arg: str,
-    model: type,
-    db: Session,
-) -> bool:
-    return bool(
-        db.exec(statement=select(model).where(getattr(model, arg) == param)).first()
-    )
-
-
 async def create(
     param: dict | Any,
     table: type,
