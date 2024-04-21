@@ -8,6 +8,8 @@ from utils.utils import create_access_token, validate_firebase_token_header
 from dependencies import crud
 from datetime import timedelta
 from configurations.config import settings
+import firebase_admin
+from firebase_admin import auth
 import logging
 
 user_router = APIRouter(
@@ -30,21 +32,41 @@ async def register(
 @user_router.post("/login")
 async def login(
     db: Annotated[Session, Depends(get_db)],
-    email: Annotated[str, Depends(validate_firebase_token_header)]
+    user: Annotated[auth.UserInfo, Depends(validate_firebase_token_header)]
 ):
     """
     Login endpoint that collects token from firebase frontend and performs the exchange
     """
-    user = crud.get_user_by_email(session=db, email=email)
-    if user:
+    dbUser = crud.get_user_by_email(session=db, email=user.email)
+    if dbUser:
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         return Token(
             access_token=create_access_token(
-                user.id, expires_delta=access_token_expires
+                dbUser.id, expires_delta=access_token_expires
             )
         )
     else:
-        raise HTTPException(status_code=400, detail="User Not Found")
+        try:
+            
+            if user.display_name:
+                first_name, last_name = user.display_name.split(' ', 1)
+            elif user['name']:
+                first_name, last_name = user['name'].split(' ', 1)
+            else: user
+            createdUser = crud.create_user(session=db, email=user.email, user=UserDetail(
+            first_name=first_name,
+            last_name=last_name
+        ))
+            access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+            return Token(
+                access_token=create_access_token(
+                    createdUser.id, expires_delta=access_token_expires
+                ))
+        except ValueError:
+            first_name = user.display_name
+            last_name = ''
+
+       
 
 @user_router.get("/user/name", response_model=User)
 async def get_user_name(current_user: User = Depends(get_current_user)):

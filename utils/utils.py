@@ -47,7 +47,7 @@ async def validate_firebase_token_header(request: Request):
         raise HTTPException(status_code=401, detail="Firebase Missing Token")
     try:
         user = auth.verify_id_token(jwt)
-        return user.get('email')
+        return user
         # there is no if statement here to check user because i'm assuming that the frontend would have alredy registerd the user and the user would have been created in the database 
     except Exception as e:
         print(e, "authentication error")
