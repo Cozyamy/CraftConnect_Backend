@@ -22,7 +22,6 @@ class UserDetail(BaseModel):
 
 class User(UserCreate, table=True):
     __tablename__ = "users"
-    password: str   
     first_name: str
     last_name: str
     phone_number: PhoneNumber | None
