@@ -1,40 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, File, UploadFile
+from models.user_models import Artisan, ArtisanIn, User
+from controllers.artisan_controller import parse_artisan_info, validate_artisan_info, validate_picture, save_picture
 from dependencies.deps import get_db, get_current_user
-from models.user_models import User, ArtisanSearchResult, ArtisanResponse
-from typing import List, Dict
-from dependencies import crud
-from dependencies.crud import artisan_to_search_result
+from sqlmodel import Session
 
 artisan_router = APIRouter(
     tags=["Artisan"]
 )
 
-@artisan_router.get("/artisans/all", response_model=Dict[str, List[ArtisanSearchResult]])
-async def browse_all_artisans(
-    db: Session = Depends(get_db)
+@artisan_router.post("/submit_artisan_info/")
+async def submit_artisan_info(
+    artisan_info: ArtisanIn = Depends(parse_artisan_info),
+    picture: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    artisans = crud.get_all_artisans(db)
-    artisan_results = [artisan_to_search_result(artisan) for artisan in artisans]
-    return {"artisans": artisan_results}
+    validate_artisan_info(artisan_info)
+    validate_picture(picture)
+    unique_filename = save_picture(picture)
 
-
-@artisan_router.get("/artisans/category/{category}", response_model=List[ArtisanSearchResult])
-async def search_artisans_by_category(category: str, db: Session = Depends(get_db)):
-    artisans = crud.get_artisans_by_category(db, category)
-    return [artisan_to_search_result(artisan) for artisan in artisans]
-
-@artisan_router.get("/artisans/name/{name}", response_model=List[ArtisanSearchResult])
-async def search_artisans_by_name(name: str, db: Session = Depends(get_db)):
-    artisans = crud.get_artisans_by_name(db, name)
-    return [artisan_to_search_result(artisan) for artisan in artisans]
-
-@artisan_router.get("/artisans/location/{location}", response_model=List[ArtisanSearchResult])
-async def search_artisans_by_location(location: str, db: Session = Depends(get_db)):
-    artisans = crud.get_artisans_by_location(db, location)
-    return [artisan_to_search_result(artisan) for artisan in artisans]
-
-@artisan_router.get("/artisans/price", response_model=List[ArtisanSearchResult])
-async def search_artisans_by_price_range(min_price: float, max_price: float, db: Session = Depends(get_db)):
-    artisans = crud.get_artisans_by_price_range(db, min_price, max_price)
-    return [artisan_to_search_result(artisan) for artisan in artisans]
+    db_artisan = Artisan(**artisan_info.dict(), picture_name=unique_filename, user_id=current_user.id)
+    db.add(db_artisan)
+    db.commit()
+    db.refresh(db_artisan)
+    return {"message": "Artisan information submitted successfully"}

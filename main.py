@@ -4,8 +4,6 @@ from fastapi.responses import JSONResponse
 from configurations.config import settings
 from configurations.db import engine
 from routes.user_route import user_router
-from routes.artisan_route import artisan_router
-from routes.post_ad_route import post_ad_router
 from sqlmodel import SQLModel
 import logging
 
@@ -24,8 +22,6 @@ app.add_middleware(
 )
 
 app.include_router(user_router, prefix=settings.API_V1_STR)
-app.include_router(post_ad_router, prefix=settings.API_V1_STR)
-app.include_router(artisan_router, prefix=settings.API_V1_STR)
 
 @app.get(settings.API_V1_STR, include_in_schema=False)
 def root() -> JSONResponse:

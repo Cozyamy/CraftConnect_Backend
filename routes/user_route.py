@@ -66,6 +66,46 @@ async def login(
             first_name = user.display_name
             last_name = ''
 
+# @user_router.post("/login")
+# async def login(
+#     db: Annotated[Session, Depends(get_db)],
+#     user: Annotated[auth.UserInfo, Depends(validate_firebase_token_header)]
+# ):
+#     """
+#     Login endpoint that collects token from firebase frontend and performs the exchange
+#     """
+#     dbUser = crud.get_user_by_email(session=db, email=user.email)
+#     if dbUser:
+#         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+#         return Token(
+#             access_token=create_access_token(
+#                 dbUser.id, expires_delta=access_token_expires
+#             )
+#         )
+#     else:
+#         first_name = ''
+#         last_name = ''
+#         if user.display_name:
+#             try:
+#                 first_name, last_name = user.display_name.split(' ', 1)
+#             except ValueError:
+#                 first_name = user.display_name
+#         elif 'name' in user:
+#             try:
+#                 first_name, last_name = user['name'].split(' ', 1)
+#             except ValueError:
+#                 first_name = user['name']
+
+#         createdUser = crud.create_user(session=db, email=user.email, user=UserDetail(
+#             first_name=first_name,
+#             last_name=last_name
+#         ))
+#         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+#         return Token(
+#             access_token=create_access_token(
+#                 createdUser.id, expires_delta=access_token_expires
+#             ))
+
        
 
 @user_router.get("/user/name", response_model=User)
