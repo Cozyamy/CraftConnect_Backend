@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
+from sqlalchemy.orm import joinedload
 from dependencies.deps import get_db, get_current_user
 from models.user_models import User, UserDetail, UserUpdate
+from models.config_models import Token
 from typing import Annotated, Any
 from utils.utils import create_access_token, validate_firebase_token_header
 from dependencies import crud
@@ -62,6 +64,22 @@ async def get_user_name(current_user: User = Depends(get_current_user)):
     Get the name of the current user.
     """
     return current_user
+
+@user_router.get("/users/me")
+async def get_current_user(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    statement = select(User).where(User.id == current_user.id).options(joinedload(User.artisan), joinedload(User.services))
+    user = db.exec(statement).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@user_router.get("/users/{user_id}")
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    statement = select(User).where(User.id == user_id).options(joinedload(User.artisan), joinedload(User.services))
+    user = db.exec(statement).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 @user_router.put("/users/me")
 def update_user(user: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
