@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
 from dependencies.deps import get_db, get_current_user
-from models.user_models import User, UserDetail, Token, UserUpdate
+from models.user_models import User, UserDetail, UserUpdate
 from typing import Annotated, Any
 from utils.utils import create_access_token, validate_firebase_token_header
 from dependencies import crud

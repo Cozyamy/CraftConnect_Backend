@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, Relationship, Column, VARCHAR
+from sqlmodel import SQLModel, Field, Relationship, Column, VARCHAR, ForeignKey
 from pydantic import BaseModel, EmailStr
 from pydantic_extra_types.phone_numbers import PhoneNumber
 from typing import List, Optional
@@ -20,99 +20,84 @@ class UserDetail(BaseModel):
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
     phone_number: Optional[str] = Field(default=None, description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
 
-class UserLogin(SQLModel):
-    password: str = Field(min_length=8, max_length=100, description="Password of the user",title="Password")
-
-class ArtisanCreate(BaseModel):
-    category: str
-    price: float
-    location: str
-    description: str
-
-class CategoriesResponse(BaseModel):
-    categories: List[str]
-
-class ArtisanResponse(BaseModel):
-    message: str
-
-class ArtisanSearchResult(BaseModel):
-    id: int
-    category: str
-    price: float
-    location: str
-    description: str
-    created_at: datetime
-    user_email: EmailStr
-    user_first_name: str
-    user_last_name: str
-    user_phone_number: str
-    pictures: List[str]
-
-    class Config:
-        from_attributes = True
-
-class Token(SQLModel):
-    access_token: str
-    token_type: str = "bearer"
-
-class TokenData(SQLModel):
-    sub: int | None = None
-
-class UserOutput(SQLModel):
-    id: int
-    name: str
-    email: EmailStr
-    phone: PhoneNumber
-
-class Order(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    artisan_id: int = Field(foreign_key="artisan.id")
-    location: str
-    work_details: str
-    serial_number: str
-    category: str
-    date: datetime
-    status: str = Field(default="pending")
-
-class OrderDetails(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    artisan_id: int = Field(foreign_key="artisan.id")
-    location: str
-    work_details: str
-    serial_number: str
-    category: str
-    date: datetime
-    status: str = Field(default="pending")
-    artisan: "Artisan" = Relationship(back_populates="orders")
-
-class Artisan(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    category: str
-    price: float
-    location: str
-    description: str
-    pictures: List["Picture"] = Relationship(back_populates="artisan")
-    created_at: datetime = Field(sa_column_kwargs={"default": datetime.now(timezone.utc)})
-    user: "User" = Relationship(back_populates="artisans")
-    orders: List[OrderDetails] | None = Relationship(back_populates="artisan")
-
-class Picture(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    artisan_id: int = Field(foreign_key="artisan.id")
-    path: str
-    artisan: Artisan = Relationship(back_populates="pictures")
-
 class User(UserCreate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    artisans: List[Artisan] | None = Relationship(back_populates="user")
     first_name: str
     last_name: str
     phone_number: Optional[str] = Field(default=None, description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
+    is_premium: bool = Field(default=False)
+    registered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    artisan: Optional["Artisan"] = Relationship(back_populates="user")
+    services: List["Service"] = Relationship(back_populates="user")
 
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone_number: Optional[str] = None
+
+class Category(SQLModel, table=True):
+    __tablename__ = "categories"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    services: List["Service"] = Relationship(back_populates="category")
+
+class ArtisanIn(SQLModel):
+    address: str
+
+class ServiceBase(SQLModel):
+    price: float
+    description: str
+    location: str
+    picture_1: str
+    picture_2: Optional[str] = None
+
+class ServiceCreate(ServiceBase):
+    category_id: int
+    user_id: int
+
+# class Artisan(SQLModel, table=True):
+#     __tablename__ = "artisans"
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     address: str
+#     picture_name: str
+#     user_id: Optional[int] = Field(
+#         foreign_key="users.id",
+#         description="ID of the user associated with this artisan profile",
+#     )
+#     user: Optional[User] = Relationship(back_populates="artisan")
+#     services: List["Service"] = Relationship(back_populates="artisan")
+
+class Artisan(SQLModel, table=True):
+    __tablename__ = "artisans"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    address: str
+    picture_name: str
+    # ID of the user associated with this artisan profile
+    user_id: Optional[int] = Column(ForeignKey("users.id"))
+    user: Optional[User] = Relationship(back_populates="artisan")
+    services: List["Service"] = Relationship(back_populates="artisan")
+
+
+# class Service(ServiceBase, table=True):
+#     __tablename__ = "services"
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     category_id: int = Field(foreign_key="categories.id")
+#     artisan_id: int = Field(foreign_key="artisans.id")
+#     user_id: int = Field(foreign_key="users.id")
+#     category: "Category" = Relationship(back_populates="services")
+#     artisan: "Artisan" = Relationship(back_populates="services")
+#     user: "User" = Relationship(back_populates="services")
+
+class Service(SQLModel, table=True):
+    __tablename__ = "services"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: str
+    price: float
+    user_id: Optional[int] = Column(ForeignKey("users.id"))
+    user: Optional[User] = Relationship(back_populates="services")
+    category_id: Optional[int] = Column(ForeignKey("categories.id"))
+    category: Optional[Category] = Relationship(back_populates="services")
+    artisan_id: Optional[int] = Column(ForeignKey("artisans.id"))
+    artisan: Optional[Artisan] = Relationship(back_populates="services")

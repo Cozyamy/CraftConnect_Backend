@@ -5,7 +5,7 @@ from jose import jwt, JWTError
 import jwt
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
-from models.user_models import TokenData
+from models.config_models import TokenData
 from pydantic import ValidationError
 from fastapi import HTTPException, status, Request, Header
 from firebase_admin import auth
