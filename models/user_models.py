@@ -113,3 +113,27 @@ class ServiceSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# class BookingBase(SQLModel):
+#     work_details: str
+#     location: str
+
+# class BookingCreate(BookingBase):
+#     user_id: int
+#     service_id: int
+#     name: Optional[str] = None
+#     email: Optional[str] = None
+#     phone_number: Optional[str] = None
+
+# class BookingUpdate(SQLModel):
+#     work_details: Optional[str] = Field(None)
+#     location: Optional[str] = Field(None)
+
+# class Booking(BookingBase, table=True):
+#     __tablename__ = "bookings"
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     user_id: int = Field(foreign_key="users.id")
+#     service_id: int = Field(foreign_key="services.id")
+#     user: "User" = Relationship(back_populates="bookings")
+#     service: "Service" = Relationship(back_populates="bookings")

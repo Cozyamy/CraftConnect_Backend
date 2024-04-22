@@ -7,6 +7,7 @@ from routes.user_route import user_router
 from routes.category_route import category_router
 from routes.artisan_route import artisan_router
 from routes.service_route import service_router
+from routes.booking_route import booking_router
 from sqlmodel import SQLModel
 import logging
 
@@ -28,6 +29,7 @@ app.include_router(user_router, prefix=settings.API_V1_STR)
 app.include_router(category_router, prefix=settings.API_V1_STR)
 app.include_router(artisan_router, prefix=settings.API_V1_STR)
 app.include_router(service_router, prefix=settings.API_V1_STR)
+app.include_router(booking_router, prefix=settings.API_V1_STR) 
 
 @app.get(settings.API_V1_STR, include_in_schema=False)
 def root() -> JSONResponse:

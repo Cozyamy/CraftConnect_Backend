@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlmodel import Session, func
+from sqlmodel import Session, func, and_
 from models.user_models import Service, Category, ServiceSchema
 from dependencies.deps import get_db
 from dependencies.deps import get_current_user
@@ -44,6 +44,15 @@ async def create_service(
 
     return {"message": "Service created successfully"}
 
+@service_router.get("/services")
+async def get_all_services(db: Session = Depends(get_db)):
+    db_services = db.query(Service).all()
+
+    if not db_services:
+        raise HTTPException(status_code=404, detail="No services found")
+
+    return db_services
+
 @service_router.get("/service/{service_id}")
 async def get_service(service_id: int, db: Session = Depends(get_db)):
     db_service = db.query(Service).filter(Service.id == service_id).first()
@@ -58,11 +67,45 @@ async def get_user_services(db: Session = Depends(get_db), current_user: User = 
         raise HTTPException(status_code=404, detail="No services found for this user")
     return user_services
 
+@service_router.get("/services")
+async def get_services_by_category(category_name: str = None, db: Session = Depends(get_db)):
+    if category_name:
+        db_services = db.query(Service).join(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
+    else:
+        db_services = db.query(Service).all()
+
+    if not db_services:
+        raise HTTPException(status_code=404, detail="No services found")
+
+    return db_services
+
 @service_router.get("/services/category/{category_name}")
 async def get_services_by_category(category_name: str, db: Session = Depends(get_db)):
     db_services = db.query(Service).join(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
     if not db_services:
         raise HTTPException(status_code=404, detail="No services found for this category")
+    return db_services
+
+@service_router.get("/services/search")
+async def get_services_by_price_location_and_category(min_price: float = None, max_price: float = None, location: str = None, category_name: str = None, db: Session = Depends(get_db)):
+    filters = []
+
+    if min_price is not None:
+        filters.append(Service.price >= min_price)
+    if max_price is not None:
+        filters.append(Service.price <= max_price)
+    if location is not None:
+        filters.append(Service.location == location)
+    if category_name is not None:
+        filters.append(func.lower(Category.name) == func.lower(category_name))
+    if not filters:
+        db_services = db.query(Service).all()
+    else:
+        db_services = db.query(Service).join(Category).filter(and_(*filters)).all()
+
+    if not db_services:
+        raise HTTPException(status_code=404, detail="No services found")
+
     return db_services
 
 @service_router.put("/update_service/{service_id}")
@@ -80,8 +123,7 @@ async def update_service(
     service = db.query(Service).filter(Service.id == service_id, Service.user_id == current_user.id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
-
-    # Update the service details
+    
     if price is not None:
         service.price = price
     if description is not None:
@@ -101,14 +143,11 @@ async def update_service(
 
 @service_router.delete("/delete_service/{service_id}")
 async def delete_service(service_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    db_service = db.query(Service).filter(Service.id == service_id).first()
-    if not db_service:
-        raise HTTPException(status_code=404, detail="Service not found")
+    service = db.query(Service).filter(Service.id == service_id, Service.user_id == current_user.id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found or not authorized to delete this service")
 
-    if db_service.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this service")
-
-    db.delete(db_service)
+    db.delete(service)
     db.commit()
 
     return {"message": "Service deleted successfully"}
