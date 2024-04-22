@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session, func
-from models.user_models import Service, Category
+from models.user_models import Service, Category, ServiceSchema
 from dependencies.deps import get_db
 from dependencies.deps import get_current_user
 from models.user_models import User, Artisan
 from controllers.service_controller import save_picture
+from typing import List
 
 service_router = APIRouter(tags=["Service"])
 
@@ -50,6 +51,13 @@ async def get_service(service_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Service not found")
     return db_service
 
+@service_router.get("/user/services", response_model=List[ServiceSchema])
+async def get_user_services(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user_services = db.query(Service).filter(Service.user_id == current_user.id).all()
+    if not user_services:
+        raise HTTPException(status_code=404, detail="No services found for this user")
+    return user_services
+
 @service_router.get("/services/category/{category_name}")
 async def get_services_by_category(category_name: str, db: Session = Depends(get_db)):
     db_services = db.query(Service).join(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
@@ -69,33 +77,25 @@ async def update_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_service = db.query(Service).filter(Service.id == service_id).first()
-    if not db_service:
+    service = db.query(Service).filter(Service.id == service_id, Service.user_id == current_user.id).first()
+    if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    if db_service.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this service")
-
+    # Update the service details
     if price is not None:
-        db_service.price = price
+        service.price = price
     if description is not None:
-        db_service.description = description
+        service.description = description
     if location is not None:
-        db_service.location = location
+        service.location = location
     if category_id is not None:
-        category = db.query(Category).filter(Category.id == category_id).first()
-        if not category:
-            raise HTTPException(status_code=404, detail="Category not found")
-        db_service.category_id = category.id
+        service.category_id = category_id
     if picture_1 is not None:
-        db_service.picture_1 = save_picture(picture_1)
+        service.picture_1 = picture_1.filename
     if picture_2 is not None:
-        if not current_user.is_premium:
-            raise HTTPException(status_code=400, detail="Free plan allows only one picture")
-        db_service.picture_2 = save_picture(picture_2)
+        service.picture_2 = picture_2.filename
 
     db.commit()
-
     return {"message": "Service updated successfully"}
 
 

@@ -99,3 +99,17 @@ class Service(ServiceBase, table=True):
     category: "Category" = Relationship(back_populates="services")
     artisan: "Artisan" = Relationship(back_populates="services")
     user: "User" = Relationship(back_populates="services")
+
+class ServiceSchema(BaseModel):
+    id: Optional[int] = None
+    price: float
+    description: str
+    location: str
+    picture_1: str
+    picture_2: Optional[str] = None
+    category_id: int
+    artisan_id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True

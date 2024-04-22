@@ -65,18 +65,9 @@ async def get_user_name(current_user: User = Depends(get_current_user)):
     """
     return current_user
 
-@user_router.get("/users/me")
-async def get_current_user(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    statement = select(User).where(User.id == current_user.id).options(joinedload(User.artisan), joinedload(User.services))
-    user = db.exec(statement).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-@user_router.get("/users/{user_id}")
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    statement = select(User).where(User.id == user_id).options(joinedload(User.artisan), joinedload(User.services))
-    user = db.exec(statement).first()
+@user_router.get("/user/me", response_model=UserSchema)
+def get_current_user_details(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user = db.query(User).options(joinedload(User.artisan)).filter(User.id == current_user.id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
