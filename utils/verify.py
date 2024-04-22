@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request
+# from fastapi import HTTPException, Request
 from firebase_admin import auth
 
 from .format import response
@@ -15,8 +15,8 @@ async def verify_auth_token():
 def verify_firebase_token(token):
 
     try:
-        user = auth.verify_id_token(id_token=token)
-        return user.get("email")
+        user: dict = auth.verify_id_token(id_token=token)
+        return user
 
     except Exception as error:
-        return response.http_error(error)
+        raise error

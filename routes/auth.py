@@ -8,20 +8,20 @@ from utils import response
 auth: APIRouter = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@auth.post(path="/register", response_model=UserBase)
+@auth.post(path="/register", response_model=ApiResponse)
 async def create_user(
-    user: UserCreate, email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP
+    user: UserCreate, token: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP
 ):
     """
     Endpoint to register a new user.
 
     Args:
     - `user (UserCreate)`: User data for registration.
-    - `email (FIREBASE_USER_DEPENDENCY)`: Firebase user email.
+    - `token (FIREBASE_USER_DEPENDENCY)`: Firebase user token.
     - `db_access (SESSION_DEP)`: Database session.
 
     Returns:
-    - `JSONResponse`: JSON formatted response.
+    - `JSONResponse`: JSON response containing the signup status if successful.
 
     Raises:
     - `HTTPException`: If there's an error during user creation.
@@ -31,13 +31,13 @@ async def create_user(
         request = await create_new(
             data=user,
             db=db_access,
-            fb_mail=email,
+            fb_mail=token["email"],
         )
 
         if not request:
             raise HTTPException(
                 status_code=400,
-                detail=f"Error creating this user. Registration not completed.",
+                detail=f"Error creating this user. Registration not completed 😥.",
             )
 
         return response.to_json(
@@ -52,7 +52,7 @@ async def create_user(
 
 
 @auth.post(path="/login", response_model=ApiResponse)
-async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
+async def log_in_user(token: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
     """
     Logs in a user based on the provided email.
 
@@ -68,7 +68,7 @@ async def log_in_user(email: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
     """
 
     try:
-        request = await log_in(data=email, db=db_access)
+        request = await log_in(data=token, db=db_access)
 
         if not request:
             raise HTTPException(
