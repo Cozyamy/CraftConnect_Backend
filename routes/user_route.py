@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from dependencies.deps import get_db, get_current_user
-from models.user_models import User, UserDetail, UserUpdate
+from models.user_models import User, UserDetail, UserUpdate, UserSchema
 from models.config_models import Token
 from typing import Annotated, Any
 from utils.utils import create_access_token, validate_firebase_token_header
@@ -92,3 +92,10 @@ def update_user(user: UserUpdate, db: Session = Depends(get_db), current_user: U
             setattr(db_user, key, value)
     db.commit()
     return db_user
+
+@user_router.get("/user/{user_id}", response_model=UserSchema)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.exec(select(User).where(User.id == user_id).options(joinedload(User.artisan))).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

@@ -57,6 +57,28 @@ class Artisan(SQLModel, table=True):
 class ArtisanIn(SQLModel):
     address: str
 
+class ArtisanSchema(BaseModel):
+    id: Optional[int] = None
+    address: str
+    picture_name: str
+    user_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+class UserSchema(BaseModel):
+    id: Optional[int] = None
+    first_name: str
+    last_name: str
+    is_premium: bool
+    registered_at: datetime
+    email: str
+    phone_number: Optional[str] = None
+    artisan: Optional[ArtisanSchema] = None
+
+    class Config:
+        from_attributes = True
+
 class ServiceBase(SQLModel):
     price: float
     description: str
