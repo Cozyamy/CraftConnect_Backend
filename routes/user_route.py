@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from dependencies.deps import get_db, get_current_user
 from models.user_models import User, UserDetail, UserUpdate, UserSchema
+from controllers.artisan_controller import save_picture, validate_picture
 from models.config_models import Token
 from typing import Annotated, Any
 from utils.utils import create_access_token, validate_firebase_token_header
@@ -72,8 +73,25 @@ def get_current_user_details(db: Session = Depends(get_db), current_user: User =
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+# @user_router.put("/users/me")
+# def update_user(user: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+#     statement = select(User).where(User.id == current_user.id)
+#     db_user = db.exec(statement).first()
+#     if not db_user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     for key, value in user.model_dump().items():
+#         if value is not None:
+#             setattr(db_user, key, value)
+#     db.commit()
+#     return db_user
+
 @user_router.put("/users/me")
-def update_user(user: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_user(
+    user: UserUpdate,
+    profile_picture: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     statement = select(User).where(User.id == current_user.id)
     db_user = db.exec(statement).first()
     if not db_user:
@@ -81,6 +99,9 @@ def update_user(user: UserUpdate, db: Session = Depends(get_db), current_user: U
     for key, value in user.model_dump().items():
         if value is not None:
             setattr(db_user, key, value)
+    if profile_picture:
+        validate_picture(profile_picture)
+        db_user.profile_picture = save_picture(profile_picture)
     db.commit()
     return db_user
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlmodel import Session, func, and_
+from sqlmodel import Session, func, and_, select
 from models.user_models import Service, Category, ServiceSchema
 from dependencies.deps import get_db
 from dependencies.deps import get_current_user
@@ -20,6 +20,7 @@ async def create_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """ Create a new service without other field selection"""
     if not current_user.is_premium and (picture_2 is not None):
         raise HTTPException(status_code=400, detail="Free plan allows only one picture")
 
@@ -44,6 +45,48 @@ async def create_service(
 
     return {"message": "Service created successfully"}
 
+@service_router.post("/create_services/")
+async def create_service_with_others(
+    price: float = Form(...),
+    description: str = Form(...),
+    location: str = Form(...),
+    category_id: int = Form(None),
+    category_name: str = Form(None),
+    picture_1: UploadFile = File(...),
+    picture_2: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """ Create a new service and entertains the other selection field"""
+    if not current_user.is_premium and (picture_2 is not None):
+        raise HTTPException(status_code=400, detail="Free plan allows only one picture")
+
+    if category_id:
+        category = db.query(Category).filter(Category.id == category_id).first()
+        if not category:
+            raise HTTPException(status_code=400, detail="Category not found")
+    elif category_name:
+        category = Category(name=category_name)
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+    else:
+        raise HTTPException(status_code=400, detail="Either category_id or category_name must be provided")
+
+    artisan = db.query(Artisan).filter(Artisan.user_id == current_user.id).first()
+    if not artisan:
+        raise HTTPException(status_code=400, detail="Current user is not an artisan")
+
+    picture_1_filename = save_picture(picture_1)
+    picture_2_filename = save_picture(picture_2) if picture_2 else None
+
+    db_service = Service(price=price, description=description, location=location, category_id=category.id, category_name=category.name, artisan_id=artisan.id, user_id=current_user.id, picture_1=picture_1_filename, picture_2=picture_2_filename)
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+
+    return {"message": "Service created successfully"}
+
 @service_router.get("/services")
 async def get_all_services(db: Session = Depends(get_db)):
     db_services = db.query(Service).all()
@@ -60,9 +103,9 @@ async def get_service(service_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Service not found")
     return db_service
 
-@service_router.get("/user/services", response_model=List[ServiceSchema])
+@service_router.get("/user/services/")
 async def get_user_services(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user_services = db.query(Service).filter(Service.user_id == current_user.id).all()
+    user_services = db.exec(select(Service).where(Service.user_id == current_user.id)).all()
     if not user_services:
         raise HTTPException(status_code=404, detail="No services found for this user")
     return user_services

@@ -1,11 +1,6 @@
 from sqlmodel import Session, select
 from models.user_models import User
 from utils.utils import verify_password
-from typing import List
-import os
-
-IMAGEDIR ='./uploaded_images/'
-os.makedirs(IMAGEDIR, exist_ok=True)
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)

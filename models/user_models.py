@@ -19,6 +19,7 @@ class UserDetail(BaseModel):
     first_name: str = Field(min_length=3, max_length=50, description="Name of the User", schema_extra={'example': ["John"]}, title="First Name")
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
     phone_number: Optional[str] = Field(default=None, description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
+    profile_picture: Optional[str] = None
 
 class User(UserCreate, table=True):
     __tablename__ = "users"
@@ -26,6 +27,7 @@ class User(UserCreate, table=True):
     last_name: str
     phone_number: PhoneNumber | None
     is_premium: bool = Field(default=False)
+    profile_picture: Optional[str] = None
     registered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     artisan: Optional["Artisan"] = Relationship(back_populates="user")
     services: List["Service"] = Relationship(back_populates="user")
@@ -35,6 +37,7 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone_number: Optional[str] = None
+    profile_picture: Optional[str] = None
 
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
@@ -96,6 +99,7 @@ class Service(ServiceBase, table=True):
     category_id: int = Field(foreign_key="categories.id")
     artisan_id: int = Field(foreign_key="artisans.id")
     user_id: int = Field(foreign_key="users.id")
+    category_name: str = Field()
     category: "Category" = Relationship(back_populates="services")
     artisan: "Artisan" = Relationship(back_populates="services")
     user: "User" = Relationship(back_populates="services")
@@ -109,7 +113,7 @@ class ServiceSchema(BaseModel):
     picture_2: Optional[str] = None
     category_id: int
     artisan_id: int
-    user_id: int
+    user_id: str | int
 
     class Config:
         from_attributes = True
