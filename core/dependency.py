@@ -11,7 +11,7 @@ from utils import response, verify_auth_token, verify_firebase_token
 from .config import settings
 from .database import engine
 
-OAUTH2_URL = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/")
+OAUTH2_URL = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login/")
 
 
 def db_session() -> Generator[Session, None, None]:

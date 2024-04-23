@@ -1,2 +1,3 @@
 from .api_response import ApiResponse, Token
-from .user import User, UserBase, UserCreate
+from .artisan import Artisan, ArtisanBase, ArtisanCreate
+from .user import User, UserBase, UserCreate, UserUpdate

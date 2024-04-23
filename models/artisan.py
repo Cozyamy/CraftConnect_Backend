@@ -13,8 +13,21 @@ class ArtisanCreate(SQLModel):
     pass
 
 
+class ArtisanUpdate(SQLModel):
+    address: str = Field(
+        title="address",
+        min_length=16,
+        max_length=250,
+        description="The address of the artisan.",
+    )
+
+
 class Artisan(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, unique=True)
+    id: UUID | None = Field(
+        default_factory=uuid4,
+        unique=True,
+        primary_key=True,
+    )
 
     phone_number: PhoneNumber | None = Field(
         title="phone number",

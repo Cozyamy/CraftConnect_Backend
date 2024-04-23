@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 
-from controllers import create_new, log_in
-from core import FIREBASE_USER_DEPENDENCY, SESSION_DEP
-from models import UserBase, UserCreate, ApiResponse
+from controllers import create_new, log_in, update_user
+from core import CURRENT_USER_DEPENDENCY, FIREBASE_USER_DEPENDENCY, SESSION_DEP
+from models import ApiResponse, UserCreate, UserUpdate
 from utils import response
 
 auth: APIRouter = APIRouter(prefix="/auth", tags=["authentication"])
@@ -80,6 +80,33 @@ async def log_in_user(token: FIREBASE_USER_DEPENDENCY, db_access: SESSION_DEP):
             status_code=200,
             status="success",
             message="User log in success 😊.",
+            data=request.model_dump(),
+        )
+
+    except HTTPException as error:
+        return response.http_error(error)
+
+
+@auth.patch(path="/update-profile", response_model=ApiResponse)
+async def update_user_profile(
+    user: UserUpdate,
+    db_access: SESSION_DEP,
+    signed_in_user: CURRENT_USER_DEPENDENCY,
+):
+
+    try:
+        request = await update_user(who=signed_in_user, data=user, db=db_access)
+
+        if not request:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Profile not updated 🫤.",
+            )
+
+        return response.to_json(
+            status_code=200,
+            status="success",
+            message="User profile updated 😊.",
             data=request.model_dump(),
         )
 
