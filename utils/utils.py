@@ -68,16 +68,3 @@ def get_user_id(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Token has expired")
     except InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-# def get_user_id(authorization: str = Header(None)):
-#     try:
-#         if authorization is None:
-#             raise HTTPException(status_code=401, detail="Authorization header is missing")
-
-#         payload = jwt.decode(authorization, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-#         user_id = payload["sub"]
-#         return int(user_id)  # Convert user ID to int
-#     except jwt.ExpiredSignatureError:
-#         raise HTTPException(status_code=401, detail="Token has expired")
-#     except InvalidTokenError:
-#         raise HTTPException(status_code=401, detail="Invalid token")
