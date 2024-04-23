@@ -8,7 +8,9 @@ from routes.category_route import category_router
 from routes.artisan_route import artisan_router
 from routes.service_route import service_router
 from routes.booking_route import booking_router
+from routes.authentication_route import authentication_router
 from sqlmodel import SQLModel
+from fastapi.staticfiles import StaticFiles
 import logging
 
 app = FastAPI(
@@ -25,6 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(authentication_router, prefix=settings.API_V1_STR) 
 app.include_router(user_router, prefix=settings.API_V1_STR)             
 app.include_router(category_router, prefix=settings.API_V1_STR)
 app.include_router(artisan_router, prefix=settings.API_V1_STR)
@@ -43,3 +46,5 @@ def on_startup():
         logger.info("Database tables created successfully")
     except Exception as e:
         logger.error(f"Error creating database tables: {e}")
+
+app.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")

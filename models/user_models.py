@@ -74,6 +74,7 @@ class UserSchema(BaseModel):
     first_name: str
     last_name: str
     is_premium: bool
+    profile_picture: Optional[str] = None
     registered_at: datetime
     email: str
     phone_number: Optional[str] = None
@@ -99,25 +100,10 @@ class Service(ServiceBase, table=True):
     category_id: int = Field(foreign_key="categories.id")
     artisan_id: int = Field(foreign_key="artisans.id")
     user_id: int = Field(foreign_key="users.id")
-    category_name: str = Field()
+    category_name: Optional[str] = Field(default=None, nullable=True)
     category: "Category" = Relationship(back_populates="services")
     artisan: "Artisan" = Relationship(back_populates="services")
     user: "User" = Relationship(back_populates="services")
-
-class ServiceSchema(BaseModel):
-    id: Optional[int] = None
-    price: float
-    description: str
-    location: str
-    picture_1: str
-    picture_2: Optional[str] = None
-    category_id: int
-    artisan_id: int
-    user_id: str | int
-
-    class Config:
-        from_attributes = True
-
 
 # class BookingBase(SQLModel):
 #     work_details: str

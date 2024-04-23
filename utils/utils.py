@@ -68,3 +68,6 @@ def get_user_id(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Token has expired")
     except InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+def get_image_url(image_filename: str):
+    return f"/uploaded_images/{image_filename}"

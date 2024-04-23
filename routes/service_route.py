@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session, func, and_, select
-from models.user_models import Service, Category, ServiceSchema
-from dependencies.deps import get_db
-from dependencies.deps import get_current_user
+from models.user_models import Service, Category
+from dependencies.deps import get_db, get_current_user
 from models.user_models import User, Artisan
 from controllers.service_controller import save_picture
-from typing import List
+from utils.utils import get_image_url
 
 service_router = APIRouter(tags=["Service"])
 
@@ -94,23 +93,50 @@ async def get_all_services(db: Session = Depends(get_db)):
     if not db_services:
         raise HTTPException(status_code=404, detail="No services found")
 
-    return db_services
+    services_with_image_urls = []
+
+    for service in db_services:
+        service_dict = service.__dict__
+
+        service_dict["picture_1_url"] = get_image_url(service.picture_1)
+        if service.picture_2:
+            service_dict["picture_2_url"] = get_image_url(service.picture_2)
+        services_with_image_urls.append(service_dict)
+
+    return services_with_image_urls
 
 @service_router.get("/service/{service_id}")
 async def get_service(service_id: int, db: Session = Depends(get_db)):
     db_service = db.query(Service).filter(Service.id == service_id).first()
     if db_service is None:
         raise HTTPException(status_code=404, detail="Service not found")
-    return db_service
+
+    service_dict = db_service.__dict__
+    service_dict["picture_1_url"] = get_image_url(db_service.picture_1)
+    if db_service.picture_2:
+        service_dict["picture_2_url"] = get_image_url(db_service.picture_2)
+
+    return service_dict
+
 
 @service_router.get("/user/services/")
 async def get_user_services(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user_services = db.exec(select(Service).where(Service.user_id == current_user.id)).all()
     if not user_services:
         raise HTTPException(status_code=404, detail="No services found for this user")
-    return user_services
+    
+    user_services_with_image_urls = []
 
-@service_router.get("/services")
+    for service in user_services:
+        service_dict = service.__dict__
+        service_dict["picture_1_url"] = get_image_url(service.picture_1)
+        if service.picture_2:
+            service_dict["picture_2_url"] = get_image_url(service.picture_2)
+        user_services_with_image_urls.append(service_dict)
+
+    return user_services_with_image_urls
+
+@service_router.get("/service")
 async def get_services_by_category(category_name: str = None, db: Session = Depends(get_db)):
     if category_name:
         db_services = db.query(Service).join(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
@@ -120,14 +146,33 @@ async def get_services_by_category(category_name: str = None, db: Session = Depe
     if not db_services:
         raise HTTPException(status_code=404, detail="No services found")
 
-    return db_services
+    services_with_image_urls = []
+
+    for service in db_services:
+        service_dict = service.__dict__
+        service_dict["picture_1_url"] = get_image_url(service.picture_1)
+        if service.picture_2:
+            service_dict["picture_2_url"] = get_image_url(service.picture_2)
+        services_with_image_urls.append(service_dict)
+
+    return services_with_image_urls
 
 @service_router.get("/services/category/{category_name}")
 async def get_services_by_category(category_name: str, db: Session = Depends(get_db)):
     db_services = db.query(Service).join(Category).filter(func.lower(Category.name) == func.lower(category_name)).all()
     if not db_services:
         raise HTTPException(status_code=404, detail="No services found for this category")
-    return db_services
+
+    services_with_image_urls = []
+
+    for service in db_services:
+        service_dict = service.__dict__
+        service_dict["picture_1_url"] = get_image_url(service.picture_1)
+        if service.picture_2:
+            service_dict["picture_2_url"] = get_image_url(service.picture_2)
+        services_with_image_urls.append(service_dict)
+
+    return services_with_image_urls
 
 @service_router.get("/services/search")
 async def get_services_by_price_location_and_category(min_price: float = None, max_price: float = None, location: str = None, category_name: str = None, db: Session = Depends(get_db)):
@@ -149,7 +194,16 @@ async def get_services_by_price_location_and_category(min_price: float = None, m
     if not db_services:
         raise HTTPException(status_code=404, detail="No services found")
 
-    return db_services
+    services_with_image_urls = []
+
+    for service in db_services:
+        service_dict = service.__dict__
+        service_dict["picture_1_url"] = get_image_url(service.picture_1)
+        if service.picture_2:
+            service_dict["picture_2_url"] = get_image_url(service.picture_2)
+        services_with_image_urls.append(service_dict)
+
+    return services_with_image_urls
 
 @service_router.put("/update_service/{service_id}")
 async def update_service(
