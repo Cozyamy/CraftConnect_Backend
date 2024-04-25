@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from core import SQLModel, engine, settings
-from routes import auth, artisan
+from routes import artisan, auth, service
 
 # init fastapi server
 app = FastAPI(
@@ -20,6 +20,10 @@ app.include_router(
 )
 app.include_router(
     router=artisan,
+    prefix=settings.API_V1_STR,
+)
+app.include_router(
+    router=service,
     prefix=settings.API_V1_STR,
 )
 
@@ -54,7 +58,12 @@ def main():
     SQLModel.metadata.create_all(engine)
 
     # run application
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=True,
+    )
 
 
 # run script

@@ -11,7 +11,7 @@ from utils import response, verify_auth_token, verify_firebase_token
 from .config import settings
 from .database import engine
 
-OAUTH2_URL = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login/")
+OAUTH2_URL = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/")
 
 
 def db_session() -> Generator[Session, None, None]:
@@ -46,8 +46,8 @@ def get_current_user(session: SESSION_DEP, token: TOKEN_DEP) -> User | JSONRespo
     """
 
     try:
-        token_data = verify_auth_token(token)
-        user = session.get(User, token_data.sub)
+        data = verify_auth_token(token)
+        user = session.get(User, data.sub)
 
         if not user:
             raise HTTPException(

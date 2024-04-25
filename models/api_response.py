@@ -13,3 +13,7 @@ class ApiResponse(BaseModel):
 class Token(BaseModel):
     access: str
     type: str = "bearer"
+
+
+class TokenID(BaseModel):
+    sub: str | None = None

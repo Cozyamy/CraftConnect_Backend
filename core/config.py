@@ -22,6 +22,10 @@ class AppSettings(BaseSettings):
 
     DOMAIN: str = "localhost"
 
+    HOST: str = "0.0.0.0"
+
+    PORT: int = 7000
+
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
     ALGORITHM: str = "HS256"

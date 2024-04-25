@@ -1,17 +1,18 @@
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING
 
-from pydantic import EmailStr, field_validator
-from pydantic_extra_types.phone_numbers import PhoneNumber
+from pydantic import EmailStr
+
+# from pydantic_extra_types.phone_numbers import PhoneNumber
 from sqlmodel import VARCHAR, Column, Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from .artisan import Artisan
-    from .service import Services
+    from .service import Service
 
 
 class UserBase(SQLModel):
+
     first_name: str = Field(
         title="name",
         min_length=3,
@@ -45,6 +46,7 @@ class UserBase(SQLModel):
 
 
 class UserCreate(UserBase):
+
     phone_number: str | None = Field(
         default=None,
         title="phone number",
@@ -72,6 +74,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(SQLModel):
+
     first_name: str | None = Field(
         default=None,
         title="name",
@@ -101,11 +104,10 @@ class UserUpdate(SQLModel):
         schema_extra={"examples": ["+2349123456789"]},
     )
 
+    pfp_url: str | None = Field(
+        default=None,
+        title="profile picture",
+        description="The user's profile picture.",
+    )
 
-class User(UserCreate, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
-    is_premium: bool = Field(default=False)
-    updated_at: datetime | None = Field(default=None)
-    artisan: Optional["Artisan"] = Relationship(back_populates="user")
-    services: list["Services"] = Relationship(back_populates="user")
-    registered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

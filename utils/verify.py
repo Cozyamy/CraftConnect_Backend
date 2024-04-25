@@ -1,15 +1,23 @@
-# from fastapi import HTTPException, Request
 from firebase_admin import auth
+from jose import JWTError, jwt
 
-from .format import response
-
-
-async def verify_password():
-    pass
+from core import settings
+from models import TokenID
 
 
-async def verify_auth_token():
-    pass
+def verify_auth_token(token: str):
+
+    try:
+        payload = jwt.decode(
+            token=token, key=settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+
+        user = TokenID(**payload)
+
+    except (JWTError, Exception) as error:
+        raise error
+
+    return user
 
 
 def verify_firebase_token(token):

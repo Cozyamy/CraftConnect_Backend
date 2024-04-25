@@ -1,19 +1,29 @@
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING, List, Optional
+from uuid import UUID
 
 from pydantic_extra_types.phone_numbers import PhoneNumber
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from .tables import Order, Service, User
 
 
 class ArtisanBase(SQLModel):
-    pass
+
+    user: Optional["User"] = Relationship(back_populates="artisan")
+    user_id: UUID | None = Field(default=None, foreign_key="user.id")
+    services: List["Service"] = Relationship(back_populates="artisan")
+    orders: List["Order"] = Relationship(back_populates="artisan")
 
 
-class ArtisanCreate(SQLModel):
-    # phone_number
-    pass
+class ArtisanCreate(ArtisanBase):
 
+    phone_number: PhoneNumber | None = Field(
+        title="phone number",
+        description="The user's phone number.",
+        schema_extra={"examples": ["+2349123456789"]},
+    )
 
-class ArtisanUpdate(SQLModel):
     address: str = Field(
         title="address",
         min_length=16,
@@ -21,16 +31,17 @@ class ArtisanUpdate(SQLModel):
         description="The address of the artisan.",
     )
 
-
-class Artisan(SQLModel, table=True):
-    id: UUID | None = Field(
-        default_factory=uuid4,
-        unique=True,
-        primary_key=True,
+    pfp_url: str = Field(
+        title="pfp url",
+        description="The profile picture of the artisan.",
     )
 
-    phone_number: PhoneNumber | None = Field(
-        title="phone number",
-        description="The user's phone number.",
-        schema_extra={"examples": ["+2349123456789"]},
+
+class ArtisanUpdate(SQLModel):
+
+    address: str = Field(
+        title="address",
+        min_length=16,
+        max_length=250,
+        description="The address of the artisan.",
     )

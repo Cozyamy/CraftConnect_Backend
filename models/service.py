@@ -1,20 +1,41 @@
-from sqlmodel import SQLModel, Field, Relationship
+from typing import TYPE_CHECKING, List
 from uuid import UUID, uuid4
+from enum import Enum
+
+from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from .artisan import Artisan
+    from .tables import Service
 
 
-class Services(table=True):
-    pass
+class ServiceLocation(str, Enum):
+    USER = "USER"
+    ARTISAN = "ARTISAN"
 
 
-class Category(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+class ServiceBase(SQLModel):
+    category_id: UUID = Field(foreign_key="category.id")
 
     name: str = Field(
-        title="name",
         min_length=3,
         max_length=100,
-        description="The name of the category.",
-        example="Photography",
+        description="The name of the service",
     )
 
-    services: list["Services"] = Relationship(back_populates="category")
+
+class ServiceCreate(SQLModel):
+    user_id: UUID = Field(foreign_key="user.id")
+
+    price: float = Field(
+        ge=0.0,
+        description="The price of the service",
+    )
+
+    description: str = Field(description="")
+
+    location: ServiceLocation = Field(description="")
+
+    images: list[str] = Field()
+
+    pass
