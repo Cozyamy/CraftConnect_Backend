@@ -28,4 +28,4 @@ def save_picture(picture: UploadFile):
     with open(file_path, "wb") as file_object:
         file_object.write(contents)
     
-    return unique_filename
+    return unique_filename 
