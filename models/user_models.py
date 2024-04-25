@@ -20,7 +20,7 @@ class UserDetail(BaseModel):
     first_name: str = Field(min_length=3, max_length=50, description="Name of the User", schema_extra={'example': ["John"]}, title="First Name")
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
     phone_number: Optional[str] = Field(default=None, description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
-    profile_picture: Optional[str] = None
+    profile_picture: str = Field(default="/uploaded_images/default_profile.png")
 
 class User(UserCreate, table=True):
     __tablename__ = "users"
@@ -28,11 +28,12 @@ class User(UserCreate, table=True):
     last_name: str
     phone_number: PhoneNumber | None
     is_premium: bool = Field(default=False)
-    profile_picture: Optional[str] = None
+    profile_picture: str = Field(default="/uploaded_images/default_profile.png")
     registered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     artisan: Optional["Artisan"] = Relationship(back_populates="user")
     services: List["Service"] = Relationship(back_populates="user")
     orders: List["Order"] = Relationship(back_populates="user")
+    reviews: List["Review"] = Relationship(back_populates="user")
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -135,3 +136,24 @@ class Order(SQLModel, table=True):
     service: "Service" = Relationship(back_populates="orders")
     user: "User" = Relationship(back_populates="orders")
     artisan: "Artisan" = Relationship(back_populates="orders")
+
+class Review(SQLModel, table=True):
+    __tablename__ = "reviews"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id")
+    name: str = Field(default="Anonymous")
+    choose_anonymous: bool = Field(default=False)
+    rating: int
+    comment: str
+    user: "User" = Relationship(back_populates="reviews")
+
+class ReviewCreate(BaseModel):
+    rating: int
+    comment: str
+    choose_anonymous: bool
+
+class ReviewDisplay(BaseModel):
+    profile_picture: str
+    name: str
+    comment: str
+    rating: int
