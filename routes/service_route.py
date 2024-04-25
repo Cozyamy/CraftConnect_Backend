@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlmodel import Session, func, and_, select
+from sqlmodel import Session, func, and_, select, between
 from models.user_models import Service, Category
 from dependencies.deps import get_db, get_current_user
 from models.user_models import User, Artisan
@@ -19,16 +19,17 @@ async def create_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """ Create a new service without other field selection"""
-    if not current_user.is_premium and (picture_2 is not None):
-        raise HTTPException(status_code=400, detail="Free plan allows only one picture")
+    """ Create a new service with category selection"""
+    if not current_user.is_premium:
+        existing_service = db.query(Service).filter(Service.user_id == current_user.id).first()
+        if existing_service:
+            raise HTTPException(status_code=400, detail="Free plan allows only one service")
+        if picture_2 is not None:
+            raise HTTPException(status_code=400, detail="Free plan allows only one picture")
 
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
-        category = Category(name="New Category")
-        db.add(category)
-        db.commit()
-        db.refresh(category) 
+        raise HTTPException(status_code=400, detail="Category not found")
 
     artisan = db.query(Artisan).filter(Artisan.user_id == current_user.id).first()
     if not artisan:
@@ -38,48 +39,6 @@ async def create_service(
     picture_2_filename = save_picture(picture_2) if picture_2 else None
 
     db_service = Service(price=price, description=description, location=location, category_id=category.id, artisan_id=artisan.id, user_id=current_user.id, picture_1=picture_1_filename, picture_2=picture_2_filename)
-    db.add(db_service)
-    db.commit()
-    db.refresh(db_service)
-
-    return {"message": "Service created successfully"}
-
-@service_router.post("/create_services/")
-async def create_service_with_others(
-    price: float = Form(...),
-    description: str = Form(...),
-    location: str = Form(...),
-    category_id: int = Form(None),
-    category_name: str = Form(None),
-    picture_1: UploadFile = File(...),
-    picture_2: UploadFile = File(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """ Create a new service and entertains the other selection field"""
-    if not current_user.is_premium and (picture_2 is not None):
-        raise HTTPException(status_code=400, detail="Free plan allows only one picture")
-
-    if category_id:
-        category = db.query(Category).filter(Category.id == category_id).first()
-        if not category:
-            raise HTTPException(status_code=400, detail="Category not found")
-    elif category_name:
-        category = Category(name=category_name)
-        db.add(category)
-        db.commit()
-        db.refresh(category)
-    else:
-        raise HTTPException(status_code=400, detail="Either category_id or category_name must be provided")
-
-    artisan = db.query(Artisan).filter(Artisan.user_id == current_user.id).first()
-    if not artisan:
-        raise HTTPException(status_code=400, detail="Current user is not an artisan")
-
-    picture_1_filename = save_picture(picture_1)
-    picture_2_filename = save_picture(picture_2) if picture_2 else None
-
-    db_service = Service(price=price, description=description, location=location, category_id=category.id, category_name=category.name, artisan_id=artisan.id, user_id=current_user.id, picture_1=picture_1_filename, picture_2=picture_2_filename)
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
@@ -175,13 +134,11 @@ async def get_services_by_category(category_name: str, db: Session = Depends(get
     return services_with_image_urls
 
 @service_router.get("/services/search")
-async def get_services_by_price_location_and_category(min_price: float = None, max_price: float = None, location: str = None, category_name: str = None, db: Session = Depends(get_db)):
+async def get_services_by_price_location_and_category(price: float = None, location: str = None, category_name: str = None, db: Session = Depends(get_db)):
     filters = []
 
-    if min_price is not None:
-        filters.append(Service.price >= min_price)
-    if max_price is not None:
-        filters.append(Service.price <= max_price)
+    if price is not None:
+        filters.append(between(Service.price, price - 1000, price + 1000))
     if location is not None:
         filters.append(Service.location == location)
     if category_name is not None:

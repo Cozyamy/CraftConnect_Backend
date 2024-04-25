@@ -9,6 +9,7 @@ from routes.artisan_route import artisan_router
 from routes.service_route import service_router
 from routes.booking_route import booking_router
 from routes.authentication_route import authentication_router
+from routes.orders_route import order_router
 from sqlmodel import SQLModel
 from fastapi.staticfiles import StaticFiles
 import logging
@@ -33,6 +34,7 @@ app.include_router(category_router, prefix=settings.API_V1_STR)
 app.include_router(artisan_router, prefix=settings.API_V1_STR)
 app.include_router(service_router, prefix=settings.API_V1_STR)
 app.include_router(booking_router, prefix=settings.API_V1_STR) 
+app.include_router(order_router, prefix=settings.API_V1_STR) 
 
 @app.get(settings.API_V1_STR, include_in_schema=False)
 def root() -> JSONResponse:

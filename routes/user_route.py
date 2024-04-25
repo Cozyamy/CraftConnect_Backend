@@ -4,8 +4,9 @@ from sqlalchemy.orm import joinedload
 from dependencies.deps import get_db, get_current_user
 from models.user_models import User, UserUpdate, UserSchema, ArtisanSchema
 from controllers.artisan_controller import save_picture, validate_picture
-from configurations.config import settings
 from utils.utils import get_image_url
+from controllers.user_controller import create_user_schema
+from typing import Optional
 
 user_router = APIRouter(
     tags=["User"]
@@ -20,34 +21,28 @@ async def get_user_name(current_user: User = Depends(get_current_user)):
 
 @user_router.get("/user/me", response_model=UserSchema)
 def get_current_user_details(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = db.query(User).options(joinedload(User.artisan)).filter(User.id == current_user.id).first()
+    statement = select(User).where(User.id == current_user.id).options(joinedload(User.artisan))
+    user = db.exec(statement).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_schema = UserSchema(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        is_premium=user.is_premium,
-        registered_at=user.registered_at,
-        email=user.email,
-        phone_number=str(user.phone_number) if user.phone_number else None,
-        artisan=ArtisanSchema(**user.artisan.dict()) if user.artisan else None
-    )
+    return create_user_schema(user)
 
-    if user.profile_picture:
-        user_schema.profile_picture = get_image_url(user.profile_picture)
-    else:
-        user_schema.profile_picture = "/uploaded_images/default_profile.png"
+@user_router.get("/user/{user_id}", response_model=UserSchema)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    statement = select(User).where(User.id == user_id).options(joinedload(User.artisan))
+    user = db.exec(statement).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if user.artisan and user.artisan.picture_name:
-        user_schema.artisan.picture_name = get_image_url(user.artisan.picture_name)
-
-    return user_schema
+    return create_user_schema(user)
 
 @user_router.put("/users/me")
 def update_user(
-    user: UserUpdate,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    email: Optional[str] = None,
+    phone_number: Optional[str] = None,
     profile_picture: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -56,38 +51,18 @@ def update_user(
     db_user = db.exec(statement).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    for key, value in user.model_dump().items():
+    changes_made = False
+    update_dict = {"first_name": first_name, "last_name": last_name, "email": email, "phone_number": phone_number}
+    for key, value in update_dict.items():
         if value is not None:
             setattr(db_user, key, value)
+            changes_made = True
     if profile_picture:
         validate_picture(profile_picture)
         db_user.profile_picture = save_picture(profile_picture)
-    db.commit()
-    return db_user
-
-@user_router.get("/user/{user_id}", response_model=UserSchema)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.exec(select(User).where(User.id == user_id).options(joinedload(User.artisan))).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user_schema = UserSchema(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        is_premium=user.is_premium,
-        registered_at=user.registered_at,
-        email=user.email,
-        phone_number=str(user.phone_number) if user.phone_number else None,
-        artisan=ArtisanSchema(**user.artisan.dict()) if user.artisan else None
-    )
-
-    if user.profile_picture:
-        user_schema.profile_picture = get_image_url(user.profile_picture)
+        changes_made = True
+    if changes_made:
+        db.commit()
+        return {"message": "User details updated successfully"}
     else:
-        user_schema.profile_picture = "/uploaded_images/default_profile.png"
-
-    if user.artisan and user.artisan.picture_name:
-        user_schema.artisan.profile_name = get_image_url(user.artisan.picture_name)
-
-    return user_schema
+        return {"message": "No changes made"}

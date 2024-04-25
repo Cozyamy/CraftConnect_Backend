@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 from pydantic_extra_types.phone_numbers import PhoneNumber
 from typing import List, Optional
 from datetime import datetime, timezone
+from enum import Enum
 
 
 class UserBase(SQLModel):
@@ -31,7 +32,7 @@ class User(UserCreate, table=True):
     registered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     artisan: Optional["Artisan"] = Relationship(back_populates="user")
     services: List["Service"] = Relationship(back_populates="user")
-
+    orders: List["Order"] = Relationship(back_populates="user")
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -56,6 +57,7 @@ class Artisan(SQLModel, table=True):
     )
     user: Optional[User] = Relationship(back_populates="artisan")
     services: List["Service"] = Relationship(back_populates="artisan")
+    orders: List["Order"] = Relationship(back_populates="artisan")
 
 class ArtisanIn(SQLModel):
     address: str
@@ -104,26 +106,32 @@ class Service(ServiceBase, table=True):
     category: "Category" = Relationship(back_populates="services")
     artisan: "Artisan" = Relationship(back_populates="services")
     user: "User" = Relationship(back_populates="services")
+    orders: List["Order"] = Relationship(back_populates="service")
 
-# class BookingBase(SQLModel):
-#     work_details: str
-#     location: str
+class Booking(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    service_id: int = Field(foreign_key="services.id")
+    user_id: int = Field(foreign_key="users.id")
+    name: str
+    email: str
+    phone_number: str
+    workdetails: str
+    time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-# class BookingCreate(BookingBase):
-#     user_id: int
-#     service_id: int
-#     name: Optional[str] = None
-#     email: Optional[str] = None
-#     phone_number: Optional[str] = None
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    DECLINED = "declined"
+    DELIVERED = "delivered"
 
-# class BookingUpdate(SQLModel):
-#     work_details: Optional[str] = Field(None)
-#     location: Optional[str] = Field(None)
-
-# class Booking(BookingBase, table=True):
-#     __tablename__ = "bookings"
-#     id: Optional[int] = Field(default=None, primary_key=True)
-#     user_id: int = Field(foreign_key="users.id")
-#     service_id: int = Field(foreign_key="services.id")
-#     user: "User" = Relationship(back_populates="bookings")
-#     service: "Service" = Relationship(back_populates="bookings")
+class Order(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    service_id: int = Field(foreign_key="services.id")
+    user_id: int = Field(foreign_key="users.id")
+    artisan_id: int = Field(foreign_key="artisans.id")
+    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    status: OrderStatus = Field(default=OrderStatus.PENDING)
+    service: "Service" = Relationship(back_populates="orders")
+    user: "User" = Relationship(back_populates="orders")
+    artisan: "Artisan" = Relationship(back_populates="orders")
