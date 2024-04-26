@@ -74,12 +74,12 @@ async def get_dashboard_info(db: Session = Depends(get_db), current_user: User =
 @artisan_router.get("/control_chart_data")
 def get_control_chart_data(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Query the database to get the number of orders completed by the current user over time
-    result = db.exec(
-        select([Order.artisan_id, func.count(Order.id), func.date_trunc('day', Order.date)]).
+    result = db.execute(
+        select(Order.artisan_id, func.count(Order.id), func.date(Order.date)).
         where(Order.artisan_id == current_user.id).
-        group_by(Order.artisan_id, func.date_trunc('day', Order.date)).
-        order_by(Order.artisan_id, func.date_trunc('day', Order.date))
-    )
+        group_by(Order.artisan_id, func.date(Order.date)).
+        order_by(Order.artisan_id, func.date(Order.date))
+    ).fetchall()
 
     # Convert the result to a format suitable for the control chart
     data = [{"artisan_id": row[0], "order_count": row[1], "date": row[2]} for row in result]
