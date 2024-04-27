@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlmodel import Session
-from models.user_models import User, Order, OrderStatus, Artisan, Booking
+from models.user_models import User, Order, Artisan, Booking
 from dependencies.deps import get_db, get_current_user
-from typing import Optional
 
 order_router = APIRouter(tags=["Orders"])
 
@@ -17,6 +16,7 @@ async def get_user_orders(db: Session = Depends(get_db), current_user: User = De
     result = []
     for order, artisan, user, booking in orders:
         result.append({
+            "order_id": order.id,
             "name": f"{user.first_name} {user.last_name}",
             "service_booked": booking.workdetails,
             "phone_number": user.phone_number,
@@ -36,6 +36,7 @@ async def get_artisan_orders(db: Session = Depends(get_db), current_user: User =
     result = []
     for order, user, booking in orders:
         result.append({
+            "order_id": order.id,
             "name": f"{user.first_name} {user.last_name}",
             "service_booked": booking.workdetails,
             "phone_number": user.phone_number,
