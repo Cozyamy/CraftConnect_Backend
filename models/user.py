@@ -1,26 +1,18 @@
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
 
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
-# from pydantic_extra_types.phone_numbers import PhoneNumber
-from sqlmodel import VARCHAR, Column, Field, Relationship, SQLModel
-
-if TYPE_CHECKING:
-    from .artisan import Artisan
-    from .service import Service
+from .artisan import ArtisanBase
 
 
-class UserBase(SQLModel):
+class UserBase(BaseModel):
 
     first_name: str = Field(
         title="name",
         min_length=3,
         max_length=100,
         description="The first name of the user.",
-        schema_extra={
-            "examples": ["John"],
-        },
+        examples=["John"],
     )
 
     last_name: str = Field(
@@ -28,19 +20,11 @@ class UserBase(SQLModel):
         min_length=3,
         max_length=100,
         description="The last name of the user.",
-        schema_extra={
-            "examples": ["Doe"],
-        },
+        examples=["Doe"],
     )
 
     email: EmailStr = Field(
         title="email",
-        sa_column=Column(
-            "email",
-            VARCHAR,
-            unique=True,
-            index=True,
-        ),
         description="The user's email address.",
     )
 
@@ -51,7 +35,7 @@ class UserCreate(UserBase):
         default=None,
         title="phone number",
         description="The user's phone number.",
-        schema_extra={"examples": ["+2349123456789"]},
+        examples=["+2349123456789"],
     )
 
     #     password: Optional[
@@ -73,7 +57,7 @@ class UserCreate(UserBase):
     #     ] = None
 
 
-class UserUpdate(SQLModel):
+class UserUpdate(BaseModel):
 
     first_name: str | None = Field(
         default=None,
@@ -81,9 +65,7 @@ class UserUpdate(SQLModel):
         min_length=3,
         max_length=100,
         description="The first name of the user.",
-        schema_extra={
-            "examples": ["John"],
-        },
+        examples=["John"],
     )
 
     last_name: str | None = Field(
@@ -92,16 +74,14 @@ class UserUpdate(SQLModel):
         min_length=3,
         max_length=100,
         description="The last name of the user.",
-        schema_extra={
-            "examples": ["Doe"],
-        },
+        examples=["Doe"],
     )
 
     phone_number: str | None = Field(
         default=None,
         title="phone number",
         description="The user's phone number.",
-        schema_extra={"examples": ["+2349123456789"]},
+        examples=["+2349123456789"],
     )
 
     pfp_url: str | None = Field(
@@ -110,4 +90,10 @@ class UserUpdate(SQLModel):
         description="The user's profile picture.",
     )
 
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+
+class UserPublic(UserBase):
+    artisan: ArtisanBase | None = None

@@ -108,7 +108,6 @@ async def log_in(data: dict, db: SESSION_DEP):
                 user: User = {
                     "first_name": first_name,
                     "last_name": last_name,
-                    "phone_number": None,
                     "email": user_signing_in["email"],
                 }
 
