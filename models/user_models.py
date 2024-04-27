@@ -20,7 +20,7 @@ class UserDetail(BaseModel):
     first_name: str = Field(min_length=3, max_length=50, description="Name of the User", schema_extra={'example': ["John"]}, title="First Name")
     last_name: str = Field(min_length=3, max_length=50, description="Last Name of User", schema_extra={'example': "Doe"}, title="Last Name")
     phone_number: Optional[str] = Field(default=None, description="Phone Number", schema_extra={'example': "+234823456789"}, title="Phone Number")
-    profile_picture: str = Field(default="/uploaded_images/default_profile.png")
+    profile_picture: Optional[str] = Field(default=None)
 
 class User(UserCreate, table=True):
     __tablename__ = "users"

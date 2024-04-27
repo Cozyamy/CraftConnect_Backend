@@ -16,12 +16,12 @@ authentication_router = APIRouter(
 
 @authentication_router.post("/register")
 async def register(
-    email: Annotated[str, Depends(validate_firebase_token_header)],
+    fbUser: Annotated[str, Depends(validate_firebase_token_header)],
     user: UserDetail,
     db: Session = Depends(get_db),
 ):
     try:
-        user = crud.create_user(session=db, email=email, user=user)
+        user = crud.create_user(session=db, email=fbUser['email'], user=user)
         return JSONResponse({"message": "User created successfully"})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
