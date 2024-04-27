@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Form
-from sqlmodel import Session
+from sqlmodel import Session, distinct
 from models.user_models import User, Order, Artisan, Booking
 from dependencies.deps import get_db, get_current_user
 
@@ -11,7 +11,8 @@ async def get_user_orders(db: Session = Depends(get_db), current_user: User = De
         join(Artisan, Order.artisan_id == Artisan.id).\
         join(User, Artisan.user_id == User.id).\
         join(Booking, Order.service_id == Booking.service_id).\
-        filter(Order.user_id == current_user.id).all()
+        filter(Order.user_id == current_user.id).\
+        group_by(Order.id).all()
     
     result = []
     for order, artisan, user, booking in orders:
@@ -31,7 +32,8 @@ async def get_artisan_orders(db: Session = Depends(get_db), current_user: User =
     orders = db.query(Order, User, Booking).\
         join(User, Order.user_id == User.id).\
         join(Booking, Order.service_id == Booking.service_id).\
-        filter(Order.artisan_id == current_user.id).all()
+        filter(Order.artisan_id == current_user.id).\
+        group_by(Order.id).all()
     
     result = []
     for order, user, booking in orders:
